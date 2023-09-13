@@ -19,6 +19,10 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
     git checkout <commit hash>
    ``` 
 3. Compile via CMake. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter`` to setup your IDE and build environment.
+4. To setup vulkan sdk env use 
+```
+source /home/share/gfx/vulkanSDK/1.3.261.1/setup-env.sh
+```
 
 ## Available Examples and Skeletons
 
