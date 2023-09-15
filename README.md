@@ -6,23 +6,34 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 
 ## Setup
 
-1. Clone this repository.
-2. `VulkanLaunchpadStarter` and its dependencies are added to this repository as submodules. Please update submodules by issuing the following command:
-    ```bash
-    git submodule update --init --recursive
-    ```  
-3. The code in this repository is tested with the following commit hash for `VulkanLaunchpadStarter`:
-    - `63d91d5855e5ceaed3babee7bec4fe28f5c968d1`
-   
-   If needed, roll back the submodule to the above commit by issuing the following command in the `VulkanLaunchpadStarter` directory:
-   ```bash
-    git checkout <commit hash>
-   ``` 
-3. Compile via CMake. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter`` to setup your IDE and build environment.
-4. To setup vulkan sdk env use 
-```
-source /home/share/gfx/vulkanSDK/1.3.261.1/setup-env.sh
-```
+1. Clone this repository using the ```https``` address.
+    ```
+    git clone <https address>
+    ```
+2. In your project directory, create a new folder called build:
+    ```
+    mkdir build
+    ```
+3. Use the cmake to generate the necessary files for compiling the project. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter`` to setup your IDE and build environment. For this step, you can either use cmake-gui or run the cmake command directly in the terminal:
+    ```
+    cd build
+    cmake ..
+    ```
+4. For lab computers to setup vulkan sdk env use:
+    ```
+    source /home/share/gfx/vulkanSDK/1.3.261.1/setup-env.sh
+    ```
+5. You can now compile and run your project.
+
+## Troubleshooting
+
+- Make sure that Vulkan sdk is installed correctly. You can verify this by running the vkCube application. (Installed automatically when you install Vulkan sdk)
+
+- For Linux, you need to install build-essentials.
+
+- For windows, ensure that the c++ desktop development kit is installed inside visual studio. You can use developer command prompt in windows.
+
+- For macOS, you must have the latest version of OS and Xcode installed.
 
 ## Available Examples and Skeletons
 
