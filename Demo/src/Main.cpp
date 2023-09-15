@@ -134,11 +134,16 @@ int main(int argc, char** argv)
 
 	// Layers enable additional functionality. We'd like to enable the standard validation layer, 
 	// so that we get meaningful and descriptive error messages whenever we mess up something:
+	std::vector<const char*> enabled_layers{};
 	if (!hlpIsInstanceLayerSupported("VK_LAYER_KHRONOS_validation")) {
-		VKL_EXIT_WITH_ERROR("Validation layer \"VK_LAYER_KHRONOS_validation\" is not supported.");
+		VKL_WARNING("Validation layers are not supported!");
+		//VKL_EXIT_WITH_ERROR("Validation layer \"VK_LAYER_KHRONOS_validation\" is not supported.");
 	}
-	VKL_LOG("Validation layer \"VK_LAYER_KHRONOS_validation\" is supported.");
-	std::vector<const char*> enabled_layers{ "VK_LAYER_KHRONOS_validation" };
+	else
+	{
+		VKL_LOG("Validation layer \"VK_LAYER_KHRONOS_validation\" is supported.");
+		enabled_layers.emplace_back("VK_LAYER_KHRONOS_validation");
+	}
 
 	// Tie everything from above together in an instance of VkInstanceCreateInfo:
 	VkInstanceCreateInfo instance_create_info = {}; // Zero-initialize every member
@@ -188,6 +193,15 @@ int main(int argc, char** argv)
 	std::vector<VkPhysicalDevice> physical_devices(device_count);
 	result = vkEnumeratePhysicalDevices(vk_instance, &device_count, physical_devices.data());
 	VKL_CHECK_VULKAN_RESULT(result);
+
+	VKL_LOG("Available gpus are:");
+	for (auto const & physicalDevice : physical_devices)
+	{
+		VkPhysicalDeviceProperties properties{};
+		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+		printf("Device name: %s, Driver version: %u\n", properties.deviceName, properties.driverVersion);
+	}
+
 	//std::cout << "Device Count: " << device_count << std::endl;
 	vk_physical_device = physical_devices[hlpSelectPhysicalDeviceIndex( physical_devices, vk_surface)];
 
@@ -195,7 +209,14 @@ int main(int argc, char** argv)
 		VKL_EXIT_WITH_ERROR("No VkPhysicalDevice selected or handle not assigned.");
 	}
 
-
+	{
+		// Print out some information about selected device
+		VkPhysicalDeviceProperties device_properties = {};
+		vkGetPhysicalDeviceProperties(vk_physical_device, &device_properties);
+		VKL_LOG("Selected Device Name and Driver Version:");
+		VKL_LOG(device_properties.deviceName);
+		VKL_LOG(device_properties.driverVersion);
+	}
 
 	VKL_LOG("Task 1.4 done.");
 
@@ -261,12 +282,6 @@ int main(int argc, char** argv)
 		VKL_EXIT_WITH_ERROR("No VkQueue selected or handle not assigned.");
 	}
 
-	// Print out some information about selected device
-	VkPhysicalDeviceProperties device_properties = {};
-	vkGetPhysicalDeviceProperties(vk_physical_device, &device_properties);
-	VKL_LOG( "Selected Device Name and Driver Version:" ); 
-	VKL_LOG(device_properties.deviceName);
-	VKL_LOG(device_properties.driverVersion);
 	VKL_LOG("Task 1.6 done.");
 
 	/* --------------------------------------------- */
