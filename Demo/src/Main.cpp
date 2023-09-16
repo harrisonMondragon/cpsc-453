@@ -21,6 +21,7 @@
 #include <vector>
 #include <unordered_map>
 #include <limits>
+#include <set>
 
 /* ------------------------------------------------ */
 // Some more little helpers directly declared here:
@@ -67,6 +68,43 @@ std::vector<const char*> getRequiredInstanceExtensions();
  */
 uint32_t selectQueueFamilyIndex(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
 
+static std::set<std::string> QuerySupportedLayers() {
+	static std::set<std::string> supportedLayers{};
+	static bool layersAreSet = false;
+
+	if (layersAreSet == false)
+	{
+		uint32_t count;
+		vkEnumerateInstanceLayerProperties(&count, nullptr); //get number of extensions
+
+		std::vector<VkLayerProperties> layers(count);
+		vkEnumerateInstanceLayerProperties(&count, layers.data()); //populate buffer
+
+		for (auto const& layer : layers) {
+			supportedLayers.insert(layer.layerName);
+		}
+		layersAreSet = true;
+	}
+	return supportedLayers;
+}
+
+static std::vector<char const*> FilterSupportedLayers(std::vector<char const*> const& layers)
+{
+	auto const supportedLayers = QuerySupportedLayers();
+	std::vector<char const*> result{};
+	for (auto const& layer : layers)
+	{
+		if (supportedLayers.find(layer) != supportedLayers.end()) {
+			printf("Layer %s is supported by this device.\n", layer);
+			result.emplace_back(layer);
+		}
+		else {
+			printf("Layer %s is not supported by this device.\n", layer);
+		}
+	}
+	return result;
+}
+
 /* ------------------------------------------------ */
 // Main
 /* ------------------------------------------------ */
@@ -89,7 +127,7 @@ int main(int argc, char** argv)
 	constexpr int window_width  = 800;
 	constexpr int window_height = 800;
 	constexpr bool fullscreen = false;
-	constexpr char* window_title = "CPSC 453: VulkanLaunchpadStarter Complete Demo";
+	constexpr char const * window_title = "CPSC 453: VulkanLaunchpadStarter Complete Demo";
 
 	// Use a monitor if we'd like to open the window in fullscreen mode:
 	GLFWmonitor* monitor = nullptr;
@@ -258,9 +296,15 @@ int main(int argc, char** argv)
 	// - The other parameters are not required (ensure that they are zero-initialized).
 	//   Finally, use vkCreateDevice to create the device and assign its handle to vk_device!
 	
-	const std::vector<const char*> device_extensions = {
+	std::vector<const char*> device_extensions = {
     	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
+
+	// For Macos compatibility
+	auto const supportedExtension = FilterSupportedLayers(std::vector<char const *>{
+		VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
+	});
+	device_extensions.insert(device_extensions.end(), supportedExtension.begin(), supportedExtension.end());
 
 	VkDeviceCreateInfo device_create_info = {};
 	device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
