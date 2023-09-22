@@ -36,16 +36,27 @@ std::shared_ptr<MyApp::LinePipeline> linePipeline{};
  * r = 0.8 * cos(2*t), 0 <= t < 2*Pi
  */
 void lineInitGeometryAndBuffers() {
-  mNumLineVertices = 255;
-  // mNumLineIndices = 255;
+
+  mNumLineVertices = 3;
   
-  vertices = std::vector<glm::vec3>( mNumLineVertices ) ;
-  for (size_t i = 0; i < mNumLineVertices; i++) {
-    float theta =  2.0f * glm::pi<float>() * static_cast<float>(i) / static_cast<float>(mNumLineVertices-1);
-    float r = 0.8 * glm::cos(2.0f * theta);
-    glm::vec3 vert = glm::vec3(r * glm::cos(theta), r * glm::sin(theta), 1.0f);
-    vertices[i] = vert; 
-  }
+  vertices = {
+    glm::vec3(0.1f, 0.1f, 1.0f),
+    glm::vec3(0.9f, 0.9f, 1.0f),
+		glm::vec3(0.9f, 0.1f, 1.0f)
+  };
+
+  // mNumLineVertices = 255;
+  // // mNumLineIndices = 255;
+  
+  // vertices = std::vector<glm::vec3>( mNumLineVertices ) ;
+  // for (size_t i = 0; i < mNumLineVertices; i++) {
+  //   float theta =  2.0f * glm::pi<float>() * static_cast<float>(i) / static_cast<float>(mNumLineVertices-1);
+  //   float r = 0.8 * glm::cos(2.0f * theta);
+  //   glm::vec3 vert = glm::vec3(r * glm::cos(theta), r * glm::sin(theta), 1.0f);
+  //   vertices[i] = vert;
+
+  //   VKL_LOG("Point x: " << r * glm::cos(theta) << " Point y: " << r * glm::sin(theta) << " Point z: " << 1.0f);
+  // }
 
   linePipeline = std::make_shared<MyApp::LinePipeline>();
 
