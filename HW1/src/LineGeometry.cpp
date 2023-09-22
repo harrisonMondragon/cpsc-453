@@ -42,12 +42,6 @@ void lineInitGeometryAndBuffers() {
   // Making n = 1 ----------------------------
   mNumLineVertices = 4;
 
-  // vertices = {
-  //   glm::vec3(-1.0f, -1.0f, 1.0f),
-  //   glm::vec3(-1.0f, 1.0f, 1.0f),
-	// 	glm::vec3(1.0f, 1.0f, 1.0f),
-  //   glm::vec3(1.0f, -1.0f, 1.0f),
-  // };
   vertices = {
     glm::vec3(1.0f, -1.0f, 1.0f),
     glm::vec3(1.0f, 1.0f, 1.0f),
@@ -59,7 +53,7 @@ void lineInitGeometryAndBuffers() {
   mNumLineVertices = 16;
   std::vector<glm::vec3> vertices2 = std::vector<glm::vec3>(mNumLineVertices);
 
-  //Bottom left corner
+  //Bottom left corner ooooooooooooooooooooooooooo
 
   //Rotation by 90 degrees clockwise
   //Scale by 1/3
@@ -69,10 +63,11 @@ void lineInitGeometryAndBuffers() {
     vertices2[i] = T1 * vertices[i];
   }
 
-  //Top left corner
+  //Top left corner  oooooooooooooooooooooooooo
 
   //Reverse OG vector to get the right order of points
   std::reverse(vertices.begin(),vertices.end());
+
   //Scale by 1/3
   //Translate to top left
   auto T2 = glm::mat3(1.0f/3.0f, 0.0f, 0.0f,  0.0f,1.0f/3.0f, 0.0f,  -2.0f/3.0f, 2.0f/3.0f, 1.0f);
@@ -80,7 +75,7 @@ void lineInitGeometryAndBuffers() {
     vertices2[i + mNumLineVertices/4] = T2 * vertices[i];
   }
 
-  //Top right corner
+  //Top right corner oooooooooooooooooooooo
 
   //Scale by 1/3
   //Translate to top right
@@ -89,7 +84,7 @@ void lineInitGeometryAndBuffers() {
     vertices2[i + 2*mNumLineVertices/4] = T3 * vertices[i];
   }
 
-  //Bottom right corner
+  //Bottom right corner ooooooooooooooooooooo
 
   //Revert back to OG vector to get the right order of points
   std::reverse(vertices.begin(),vertices.end());
@@ -103,19 +98,6 @@ void lineInitGeometryAndBuffers() {
   }
 
   vertices = vertices2;
-
-  // mNumLineVertices = 255;
-  // // mNumLineIndices = 255;
-  
-  // vertices = std::vector<glm::vec3>( mNumLineVertices ) ;
-  // for (size_t i = 0; i < mNumLineVertices; i++) {
-  //   float theta =  2.0f * glm::pi<float>() * static_cast<float>(i) / static_cast<float>(mNumLineVertices-1);
-  //   float r = 0.8 * glm::cos(2.0f * theta);
-  //   glm::vec3 vert = glm::vec3(r * glm::cos(theta), r * glm::sin(theta), 1.0f);
-  //   vertices[i] = vert;
-
-  //   VKL_LOG("Point x: " << r * glm::cos(theta) << " Point y: " << r * glm::sin(theta) << " Point z: " << 1.0f);
-  // }
 
   linePipeline = std::make_shared<MyApp::LinePipeline>();
 
