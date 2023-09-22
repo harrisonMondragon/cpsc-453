@@ -37,13 +37,72 @@ std::shared_ptr<MyApp::LinePipeline> linePipeline{};
  */
 void lineInitGeometryAndBuffers() {
 
-  mNumLineVertices = 3;
-  
+  VKL_LOG("lineInitGeometryAndBuffers called");
+
+  // Making n = 1 ----------------------------
+  mNumLineVertices = 4;
+
+  // vertices = {
+  //   glm::vec3(-1.0f, -1.0f, 1.0f),
+  //   glm::vec3(-1.0f, 1.0f, 1.0f),
+	// 	glm::vec3(1.0f, 1.0f, 1.0f),
+  //   glm::vec3(1.0f, -1.0f, 1.0f),
+  // };
   vertices = {
-    glm::vec3(0.1f, 0.1f, 1.0f),
-    glm::vec3(0.9f, 0.9f, 1.0f),
-		glm::vec3(0.9f, 0.1f, 1.0f)
+    glm::vec3(1.0f, -1.0f, 1.0f),
+    glm::vec3(1.0f, 1.0f, 1.0f),
+    glm::vec3(-1.0f, 1.0f, 1.0f),
+    glm::vec3(-1.0f, -1.0f, 1.0f),
   };
+
+  // Making n = 2 -----------------------------
+  mNumLineVertices = 16;
+  std::vector<glm::vec3> vertices2 = std::vector<glm::vec3>(mNumLineVertices);
+
+  //Bottom left corner
+
+  //Rotation by 90 degrees clockwise
+  //Scale by 1/3
+  //Translate to bottom left
+  auto T1 = glm::mat3(0.0f, -1.0f/3.0f, 0.0f,  1.0f/3.0f, 0.0f, 0.0f,  -2.0f/3.0f, -2.0f/3.0f, 1.0f);
+  for (size_t i = 0; i < mNumLineVertices/4; i++) {
+    vertices2[i] = T1 * vertices[i];
+  }
+
+  //Top left corner
+
+  //Reverse OG vector to get the right order of points
+  std::reverse(vertices.begin(),vertices.end());
+  //Scale by 1/3
+  //Translate to top left
+  auto T2 = glm::mat3(1.0f/3.0f, 0.0f, 0.0f,  0.0f,1.0f/3.0f, 0.0f,  -2.0f/3.0f, 2.0f/3.0f, 1.0f);
+  for (size_t i = 0; i < mNumLineVertices/4; i++) {
+    vertices2[i + mNumLineVertices/4] = T2 * vertices[i];
+  }
+
+  //Top right corner
+
+  //Scale by 1/3
+  //Translate to top right
+  auto T3 = glm::mat3(1.0f/3.0f, 0.0f, 0.0f,  0.0f,1.0f/3.0f, 0.0f,  2.0f/3.0f, 2.0f/3.0f, 1.0f);
+  for (size_t i = 0; i < mNumLineVertices/4; i++) {
+    vertices2[i + 2*mNumLineVertices/4] = T3 * vertices[i];
+  }
+
+  //Bottom right corner
+
+  //Revert back to OG vector to get the right order of points
+  std::reverse(vertices.begin(),vertices.end());
+
+  //Rotation by 90 degrees counter clockwise
+  //Scale by 1/3
+  //Translate to bottom right
+  auto T4 = glm::mat3(0.0f, 1.0f/3.0f, 0.0f,  -1.0f/3.0f, 0.0f, 0.0f,  2.0f/3.0f, -2.0f/3.0f, 1.0f);
+  for (size_t i = 0; i < mNumLineVertices/4; i++) {
+    vertices2[i + 3*mNumLineVertices/4] = T4 * vertices[i];
+  }
+
+  vertices = vertices2;
 
   // mNumLineVertices = 255;
   // // mNumLineIndices = 255;
