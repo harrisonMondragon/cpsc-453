@@ -53,6 +53,8 @@ void lineInitGeometryAndBuffers() {
   // N = 3, inital phase
   increaseHilbertN();
 
+  increaseHilbertN();
+
   linePipeline = std::make_shared<MyApp::LinePipeline>();
 
   // Create vertex buffer on GPU and copy data into it.
@@ -134,60 +136,51 @@ VkBuffer lineGetVerticesBuffer() {
 void increaseHilbertN(){
   VKL_LOG("increaseHilbertN called on N = " << hilbertN);
 
+  //Crunch numbers
   hilbertN ++;
   uint32_t mNumLineVertices = glm::pow(4.0f, hilbertN);
-
+  float sideSquares = glm::sqrt(mNumLineVertices) - 1.0f;
+  float stretchNumerator = glm::floor(sideSquares/2);
+  float stretch = stretchNumerator/sideSquares;
+  float translation = (stretchNumerator+1)/sideSquares;
   std::vector<glm::vec3> finalVertices = std::vector<glm::vec3>(mNumLineVertices);
 
-  auto T1 = glm::mat3(0.0f, -1.0f/3.0f, 0.0f,  1.0f/3.0f, 0.0f, 0.0f,  -2.0f/3.0f, -2.0f/3.0f, 1.0f);
-  auto T2 = glm::mat3(1.0f/3.0f, 0.0f, 0.0f,  0.0f,1.0f/3.0f, 0.0f,  -2.0f/3.0f, 2.0f/3.0f, 1.0f);
-  auto T3 = glm::mat3(1.0f/3.0f, 0.0f, 0.0f,  0.0f,1.0f/3.0f, 0.0f,  2.0f/3.0f, 2.0f/3.0f, 1.0f);
-  auto T4 = glm::mat3(0.0f, 1.0f/3.0f, 0.0f,  -1.0f/3.0f, 0.0f, 0.0f,  2.0f/3.0f, -2.0f/3.0f, 1.0f);
-
-  if (hilbertN == 3){
-    T1 = glm::mat3(0.0f, -3.0f/7.0f, 0.0f,  3.0f/7.0f, 0.0f, 0.0f,  -3.0f/7.0f, -3.0f/7.0f, 1.0f);
-    T2 = glm::mat3(3.0f/7.0f, 0.0f, 0.0f,  0.0f,3.0f/7.0f, 0.0f,  -3.0f/7.0f, 3.0/7.0f, 1.0f);
-    T3 = glm::mat3(3.0f/7.0f, 0.0f, 0.0f,  0.0f,3.0f/7.0f, 0.0f,  3.0f/7.0f, 3.0f/7.0f, 1.0f);
-    T4 = glm::mat3(0.0f, 3.0f/7.0f, 0.0f,  -3.0f/7.0f, 0.0f, 0.0f,  3.0f/7.0f, -3.0/7.0f, 1.0f);
-  }
-
-  /* Bottom left corner */
-
-  //Rotate by 90 degrees clockwise, scale by 1/3, translate to bottom left
-  //auto T1 = glm::mat3(0.0f, -1.0f/3.0f, 0.0f,  1.0f/3.0f, 0.0f, 0.0f,  -2.0f/3.0f, -2.0f/3.0f, 1.0f);
+  //Bottom left corner
+  //Rotate by 90 degrees clockwise, scale, translate to bottom left
+  auto T1 = glm::mat3(0.0f,-stretch,0.0f, stretch,0.0f,0.0f, -translation,-translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
     finalVertices[i] = T1 * vertices[i];
   }
 
-  /* Top left corner */
-
   //Reverse original vector to get the right order of points
   std::reverse(vertices.begin(),vertices.end());
 
-  //Scale by 1/3, translate to top left
-  //auto T2 = glm::mat3(1.0f/3.0f, 0.0f, 0.0f,  0.0f,1.0f/3.0f, 0.0f,  -2.0f/3.0f, 2.0f/3.0f, 1.0f);
+  //Top left corner
+  //Scale, translate to top left
+  auto T2 = glm::mat3(stretch,0.0f,0.0f, 0.0f,stretch,0.0f, -translation,translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
     finalVertices[i + mNumLineVertices/4] = T2 * vertices[i];
   }
 
-  /* Top right corner */
-
-  //Scale by 1/3, translate to top right
-  //auto T3 = glm::mat3(1.0f/3.0f, 0.0f, 0.0f,  0.0f,1.0f/3.0f, 0.0f,  2.0f/3.0f, 2.0f/3.0f, 1.0f);
+  //Top right corner
+  //Scale, translate to top right
+  auto T3 = glm::mat3(stretch,0.0f,0.0f, 0.0f,stretch,0.0f, translation,translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
     finalVertices[i + 2*mNumLineVertices/4] = T3 * vertices[i];
   }
 
-  /* Bottom right corner */
-
   //Revert back to original vector to get the right order of points
   std::reverse(vertices.begin(),vertices.end());
 
-  //Rotate by 90 degrees counter clockwise, scale by 1/3, translate to bottom right
-  //auto T4 = glm::mat3(0.0f, 1.0f/3.0f, 0.0f,  -1.0f/3.0f, 0.0f, 0.0f,  2.0f/3.0f, -2.0f/3.0f, 1.0f);
+  //Bottom right corner
+  //Rotate by 90 degrees counter clockwise, scale, translate to bottom right
+  auto T4 = glm::mat3(0.0f,stretch,0.0f, -stretch,0.0f,0.0f, translation,-translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
     finalVertices[i + 3*mNumLineVertices/4] = T4 * vertices[i];
   }
+
+  //Reverse final vector so this function can be used for any N
+  std::reverse(finalVertices.begin(),finalVertices.end());
 
   vertices = finalVertices;
 }
