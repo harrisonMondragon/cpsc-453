@@ -9,7 +9,13 @@
 // Also need a buffer on the GPU to copy the geometry data to.
 
 uint32_t hilbertN;
+double mNumLineVertices;
+double totalSideSquares;
+double fractalSideSquares;
+double stretch;
+double translation;
 std::vector<glm::vec3> vertices;
+std::vector<glm::vec3> newVertices;
 VkBuffer mLineVertices;
 
 // If using indexed drawing, the following can be used.
@@ -51,8 +57,6 @@ void lineInitGeometryAndBuffers() {
   increaseHilbertN();
 
   // N = 3, inital phase
-  increaseHilbertN();
-
   increaseHilbertN();
 
   linePipeline = std::make_shared<MyApp::LinePipeline>();
@@ -136,51 +140,86 @@ VkBuffer lineGetVerticesBuffer() {
 void increaseHilbertN(){
   VKL_LOG("increaseHilbertN called on N = " << hilbertN);
 
-  //Crunch numbers
   hilbertN ++;
-  uint32_t mNumLineVertices = glm::pow(4.0f, hilbertN);
-  float sideSquares = glm::sqrt(mNumLineVertices) - 1.0f;
-  float stretchNumerator = glm::floor(sideSquares/2);
-  float stretch = stretchNumerator/sideSquares;
-  float translation = (stretchNumerator+1)/sideSquares;
-  std::vector<glm::vec3> finalVertices = std::vector<glm::vec3>(mNumLineVertices);
+  crunchNumbers();
+
+  stretch = fractalSideSquares/totalSideSquares;
+  translation = (fractalSideSquares+1)/totalSideSquares;
 
   //Bottom left corner
-  //Rotate by 90 degrees clockwise, scale, translate to bottom left
+  //Rotate by 90 degrees clockwise, scale down, translate to bottom left
   auto T1 = glm::mat3(0.0f,-stretch,0.0f, stretch,0.0f,0.0f, -translation,-translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
-    finalVertices[i] = T1 * vertices[i];
+    newVertices[i] = T1 * vertices[i];
   }
 
   //Reverse original vector to get the right order of points
   std::reverse(vertices.begin(),vertices.end());
 
   //Top left corner
-  //Scale, translate to top left
+  //Scale down, translate to top left
   auto T2 = glm::mat3(stretch,0.0f,0.0f, 0.0f,stretch,0.0f, -translation,translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
-    finalVertices[i + mNumLineVertices/4] = T2 * vertices[i];
+    newVertices[i + mNumLineVertices/4] = T2 * vertices[i];
   }
 
   //Top right corner
-  //Scale, translate to top right
+  //Scale down, translate to top right
   auto T3 = glm::mat3(stretch,0.0f,0.0f, 0.0f,stretch,0.0f, translation,translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
-    finalVertices[i + 2*mNumLineVertices/4] = T3 * vertices[i];
+    newVertices[i + 2*mNumLineVertices/4] = T3 * vertices[i];
   }
 
   //Revert back to original vector to get the right order of points
   std::reverse(vertices.begin(),vertices.end());
 
   //Bottom right corner
-  //Rotate by 90 degrees counter clockwise, scale, translate to bottom right
+  //Rotate by 90 degrees counter clockwise, scale down, translate to bottom right
   auto T4 = glm::mat3(0.0f,stretch,0.0f, -stretch,0.0f,0.0f, translation,-translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
-    finalVertices[i + 3*mNumLineVertices/4] = T4 * vertices[i];
+    newVertices[i + 3*mNumLineVertices/4] = T4 * vertices[i];
   }
 
   //Reverse final vector so this function can be used for any N
-  std::reverse(finalVertices.begin(),finalVertices.end());
+  std::reverse(newVertices.begin(),newVertices.end());
 
-  vertices = finalVertices;
+  vertices = newVertices;
+}
+
+void decreaseHilbertN(){
+  VKL_LOG("decreaseHilbertN called on N = " << hilbertN);
+
+  //Calculate stretch before updating N
+  stretch = totalSideSquares/(fractalSideSquares);
+
+  hilbertN --;
+  crunchNumbers();
+
+  //Calculate translation after updating N
+  translation = (totalSideSquares+1)/totalSideSquares;
+
+  /*
+  Remember vertices was reversed at the end of increaseHilbertN for the
+  algorithm to work, so this uses the bottom right fractal.
+  Rotation is applied about the origin, so the bottom right fractal ends
+  up in the bottom left, in the correct orientation
+  */
+
+  //Rotate by 90 degrees clockwise, scale up, translate to fill screen
+  auto T = glm::mat3(0.0f,-stretch,0.0f, stretch,0.0f,0.0f, translation,translation,1.0f);
+  for (size_t i = 0; i < mNumLineVertices; i++) {
+    newVertices[i] = T * vertices[i];
+  }
+
+  //Reverse final vector so this function can be used for any N
+  std::reverse(newVertices.begin(),newVertices.end());
+
+  vertices = newVertices;
+}
+
+void crunchNumbers(){
+  mNumLineVertices = glm::pow(4.0f, hilbertN);
+  totalSideSquares = glm::sqrt(mNumLineVertices) - 1.0f;
+  fractalSideSquares = glm::floor(totalSideSquares/2);
+  newVertices = std::vector<glm::vec3>(mNumLineVertices);
 }

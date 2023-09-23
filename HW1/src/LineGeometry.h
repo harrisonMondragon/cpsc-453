@@ -5,5 +5,7 @@ void lineUpdateGeometryAndBuffers();
 void lineDestroyBuffers();
 void lineDraw();
 void increaseHilbertN();
+void decreaseHilbertN();
+void crunchNumbers();
 
 VkBuffer lineGetVerticesBuffer();
