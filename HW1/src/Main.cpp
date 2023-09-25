@@ -461,7 +461,7 @@ void errorCallbackFromGlfw(int error, const char* description) {
 
 std::unordered_map<int, bool> g_isGlfwKeyDown;
 
-void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) 
+void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods)
 {
 	if (action == GLFW_PRESS) {
 		g_isGlfwKeyDown[key] = true;
@@ -471,9 +471,9 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 		g_isGlfwKeyDown[key] = false;
 	}
 
-	// Handle translation in the x direction which is triggered by the 
+	// Handle translation in the x direction which is triggered by the
 	// LEFT and RIGHT cursor keys.
-		if (action == GLFW_REPEAT && ( key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT ) ) { 
+	if (action == GLFW_REPEAT && ( key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT ) ) {
 		dy = 0.0f;
 		if ( key == GLFW_KEY_RIGHT ) {
 			tx += Dx;
@@ -492,14 +492,14 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 			tx = 1.0f;
 			dx = 2.0f;
 		}
-		
+
 		// update geometry
 		lineUpdateGeometryAndBuffers();
 	}
 
-	// Handle translation in the y direction which is triggered by the 
+	// Handle translation in the y direction which is triggered by the
 	// DOWN and UP cursor keys.
-	if (action == GLFW_REPEAT && ( key == GLFW_KEY_UP || key == GLFW_KEY_DOWN ) ) { 
+	if (action == GLFW_REPEAT && ( key == GLFW_KEY_UP || key == GLFW_KEY_DOWN ) ) {
 		dx = 0.0;
 		if ( key == GLFW_KEY_UP ) {
 			ty += Dy;
@@ -518,9 +518,20 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 			ty = 1.0f;
 			dy = 2.0f;
 		}
-		
+
 		// update geometry
 		lineUpdateGeometryAndBuffers();
+	}
+
+	// Handle changes in N triggered by BACKSPACE and ENTER cursor keys
+	// BACKSPACE will decrease N and ENTER will increas N
+	if (action == GLFW_PRESS && ( key == GLFW_KEY_ENTER || key == GLFW_KEY_BACKSPACE ) ) {
+
+		if ( key == GLFW_KEY_ENTER ) {
+			increaseHilbertN();
+		} else {
+			decreaseHilbertN();
+		}
 	}
 
 	// We mark the window that it should close if ESC is pressed:

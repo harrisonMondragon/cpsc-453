@@ -5,17 +5,23 @@
 
 #include "LinePipeline.hpp"
 
-// A vector to organize geometry on the GPU.
-// Also need a buffer on the GPU to copy the geometry data to.
+// Maximum buffer size to create buffer
+// Must be at least 4^N for the maximum N
+// NOTE: This varies for different machines
+#define MAX_BUFFER_SIZE 16384
 
+// Some variables to perform calculations
 uint32_t hilbertN;
 double mNumLineVertices;
 double totalSideSquares;
 double fractalSideSquares;
 double stretch;
 double translation;
-std::vector<glm::vec3> vertices;
 std::vector<glm::vec3> newVertices;
+
+// A vector to organize geometry on the GPU.
+// Also need a buffer on the GPU to copy the geometry data to.
+std::vector<glm::vec3> vertices;
 VkBuffer mLineVertices;
 
 // If using indexed drawing, the following can be used.
@@ -53,6 +59,11 @@ void lineInitGeometryAndBuffers() {
     glm::vec3(-1.0f, -1.0f, 1.0f),
   };
 
+  // Create vertex buffer on GPU and copy data into it.
+  mLineVertices = vklCreateHostCoherentBufferAndUploadData(
+      vertices.data(), sizeof(vertices[0]) * MAX_BUFFER_SIZE,
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+
   // N = 2
   increaseHilbertN();
 
@@ -60,11 +71,6 @@ void lineInitGeometryAndBuffers() {
   increaseHilbertN();
 
   linePipeline = std::make_shared<MyApp::LinePipeline>();
-
-  // Create vertex buffer on GPU and copy data into it.
-  mLineVertices = vklCreateHostCoherentBufferAndUploadData(
-      vertices.data(), sizeof(vertices[0]) * vertices.size(),
-      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 }
 
 /**
@@ -129,7 +135,7 @@ void lineDraw() {
 
   cb.bindVertexBuffers(0u, {mLineVertices}, {vk::DeviceSize{0}});
   //cb.bindIndexBuffer(vk::Buffer{ mLineIndices }, vk::DeviceSize{ 0 }, vk::IndexType::eUint32);
-  cb.draw(glm::pow(4.0f, hilbertN), 1u, 0u, 0u);
+  cb.draw(mNumLineVertices, 1u, 0u, 0u);
   //cb.drawIndexed(mNumLineIndices, 1u, 0u, 0, 0u);
 }
 
@@ -184,10 +190,18 @@ void increaseHilbertN(){
   std::reverse(newVertices.begin(),newVertices.end());
 
   vertices = newVertices;
+
+  vklCopyDataIntoHostCoherentBuffer(mLineVertices, vertices.data(),
+    sizeof(vertices[0]) * vertices.size());
 }
 
 void decreaseHilbertN(){
   VKL_LOG("decreaseHilbertN called on N = " << hilbertN);
+
+  if(hilbertN == 1){
+    VKL_LOG("Cannot decrease N because 1 is the lowest possible N, returning ...");
+    return;
+  }
 
   //Calculate stretch before updating N
   stretch = totalSideSquares/(fractalSideSquares);
@@ -215,6 +229,9 @@ void decreaseHilbertN(){
   std::reverse(newVertices.begin(),newVertices.end());
 
   vertices = newVertices;
+
+  vklCopyDataIntoHostCoherentBuffer(mLineVertices, vertices.data(),
+    sizeof(vertices[0]) * vertices.size());
 }
 
 void crunchNumbers(){
