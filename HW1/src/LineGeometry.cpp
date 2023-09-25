@@ -5,10 +5,9 @@
 
 #include "LinePipeline.hpp"
 
-// Maximum buffer size to create buffer
-// Must be at least 4^N for the maximum N
-// NOTE: This varies for different machines
-#define MAX_BUFFER_SIZE 16384
+// Maximum buffer size to create buffer -> 4^10 = 1024*1024
+// NOTE: This might be too big for some machines
+#define MAX_BUFFER_SIZE 1048576
 
 // Some variables to perform calculations
 uint32_t hilbertN;
@@ -44,7 +43,8 @@ std::shared_ptr<MyApp::LinePipeline> linePipeline{};
  * Allocate a buffer on the GPU that is large enough to hold the
  * geometry data. Copy date over to the GPU.
  *
- * Explain hilbert curve ...
+ * First create hilbert curve for N = 1, then increase to N = 3 for the
+ * curve that shows on init.
  */
 void lineInitGeometryAndBuffers() {
   VKL_LOG("lineInitGeometryAndBuffers called");
@@ -95,7 +95,6 @@ void lineUpdateGeometryAndBuffers() {
     sizeof(vertices[0]) * vertices.size());
 }
 
-
 /**
  * Cleanup buffers created on the GPU that are no longer
  * needed.
@@ -143,8 +142,17 @@ VkBuffer lineGetVerticesBuffer() {
   return static_cast<VkBuffer>(mLineVertices);
 }
 
+/**
+ * Update geomemtry to increase N by applying transformations. Copy updated
+ * geometry to the GPU.
+ */
 void increaseHilbertN(){
   VKL_LOG("increaseHilbertN called on N = " << hilbertN);
+
+  if(hilbertN == 10){
+    VKL_LOG("Cannot increase N because 10 is the highest possible N, returning ...");
+    return;
+  }
 
   hilbertN ++;
   crunchNumbers();
@@ -195,6 +203,10 @@ void increaseHilbertN(){
     sizeof(vertices[0]) * vertices.size());
 }
 
+/**
+ * Update geomemtry to increase N by applying transformations. Copy updated
+ * geometry to the GPU.
+ */
 void decreaseHilbertN(){
   VKL_LOG("decreaseHilbertN called on N = " << hilbertN);
 
@@ -234,6 +246,9 @@ void decreaseHilbertN(){
     sizeof(vertices[0]) * vertices.size());
 }
 
+/**
+ * Crunch numbers needed in transformation calculations and update utility variables.
+ */
 void crunchNumbers(){
   mNumLineVertices = glm::pow(4.0f, hilbertN);
   totalSideSquares = glm::sqrt(mNumLineVertices) - 1.0f;
