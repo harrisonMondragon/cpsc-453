@@ -53,10 +53,10 @@ void lineInitGeometryAndBuffers() {
   hilbertN = 1;
 
   vertices = {
-    glm::vec3(1.0f, -1.0f, 1.0f),
-    glm::vec3(1.0f, 1.0f, 1.0f),
-    glm::vec3(-1.0f, 1.0f, 1.0f),
-    glm::vec3(-1.0f, -1.0f, 1.0f),
+    glm::vec3(0.999f, -0.999f, 0.999f),
+    glm::vec3(0.999f, 0.999f, 0.999f),
+    glm::vec3(-0.999f, 0.999f, 0.999f),
+    glm::vec3(-0.999f, -0.999f, 0.999f),
   };
 
   // Create vertex buffer on GPU and copy data into it.
@@ -143,85 +143,91 @@ VkBuffer lineGetVerticesBuffer() {
 }
 
 /**
- * Update geomemtry to increase N by applying transformations. Copy updated
+ * Update hilbert geomemtry to increase N by applying transformations. Copy updated
  * geometry to the GPU.
  */
 void increaseHilbertN(){
   VKL_LOG("increaseHilbertN called on N = " << hilbertN);
 
+  // Do not perform transformations if N is already at 10
   if(hilbertN == 10){
     VKL_LOG("Cannot increase N because 10 is the highest possible N, returning ...");
     return;
   }
 
+  // Increase N and recalculate variables used for math
   hilbertN ++;
   crunchNumbers();
 
+  // Calculate stretch and translation values (negatives will be used as needed)
   stretch = fractalSideSquares/totalSideSquares;
   translation = (fractalSideSquares+1)/totalSideSquares;
 
-  //Bottom left corner
-  //Rotate by 90 degrees clockwise, scale down, translate to bottom left
+  // Bottom left corner
+  // Rotate by 90 degrees clockwise, scale down, translate to bottom left
   auto T1 = glm::mat3(0.0f,-stretch,0.0f, stretch,0.0f,0.0f, -translation,-translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
     newVertices[i] = T1 * vertices[i];
   }
 
-  //Reverse original vector to get the right order of points
+  // Reverse original vector to get the right order of points
   std::reverse(vertices.begin(),vertices.end());
 
-  //Top left corner
-  //Scale down, translate to top left
+  // Top left corner
+  // Scale down, translate to top left
   auto T2 = glm::mat3(stretch,0.0f,0.0f, 0.0f,stretch,0.0f, -translation,translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
     newVertices[i + mNumLineVertices/4] = T2 * vertices[i];
   }
 
-  //Top right corner
-  //Scale down, translate to top right
+  // Top right corner
+  // Scale down, translate to top right
   auto T3 = glm::mat3(stretch,0.0f,0.0f, 0.0f,stretch,0.0f, translation,translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
     newVertices[i + 2*mNumLineVertices/4] = T3 * vertices[i];
   }
 
-  //Revert back to original vector to get the right order of points
+  // Revert back to original vector to get the right order of points
   std::reverse(vertices.begin(),vertices.end());
 
-  //Bottom right corner
-  //Rotate by 90 degrees counter clockwise, scale down, translate to bottom right
+  // Bottom right corner
+  // Rotate by 90 degrees counter clockwise, scale down, translate to bottom right
   auto T4 = glm::mat3(0.0f,stretch,0.0f, -stretch,0.0f,0.0f, translation,-translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices/4; i++) {
     newVertices[i + 3*mNumLineVertices/4] = T4 * vertices[i];
   }
 
-  //Reverse final vector so this function can be used for any N
+  // Reverse final vector so this function can be used for any N
   std::reverse(newVertices.begin(),newVertices.end());
 
   vertices = newVertices;
 
+  // Update buffer
   vklCopyDataIntoHostCoherentBuffer(mLineVertices, vertices.data(),
     sizeof(vertices[0]) * vertices.size());
 }
 
 /**
- * Update geomemtry to increase N by applying transformations. Copy updated
+ * Update hilbert geomemtry to decrease N by applying transformations. Copy updated
  * geometry to the GPU.
  */
 void decreaseHilbertN(){
   VKL_LOG("decreaseHilbertN called on N = " << hilbertN);
 
+  // Do not perform transformation if N is already at 1
   if(hilbertN == 1){
     VKL_LOG("Cannot decrease N because 1 is the lowest possible N, returning ...");
     return;
   }
 
-  //Calculate stretch before updating N
+  // Calculate stretch before updating N
   stretch = totalSideSquares/(fractalSideSquares);
 
+  // Decrease N and recalculate variables used for math
   hilbertN --;
   crunchNumbers();
 
-  //Calculate translation after updating N
+  // Calculate translation after updating N
   translation = (totalSideSquares+1)/totalSideSquares;
 
   /*
@@ -231,17 +237,18 @@ void decreaseHilbertN(){
   up in the bottom left, in the correct orientation
   */
 
-  //Rotate by 90 degrees clockwise, scale up, translate to fill screen
+  // Rotate by 90 degrees clockwise, scale up, translate to fill screen
   auto T = glm::mat3(0.0f,-stretch,0.0f, stretch,0.0f,0.0f, translation,translation,1.0f);
   for (size_t i = 0; i < mNumLineVertices; i++) {
     newVertices[i] = T * vertices[i];
   }
 
-  //Reverse final vector so this function can be used for any N
+  // Reverse final vector so this function can be used for any N
   std::reverse(newVertices.begin(),newVertices.end());
 
   vertices = newVertices;
 
+  // Update buffer
   vklCopyDataIntoHostCoherentBuffer(mLineVertices, vertices.data(),
     sizeof(vertices[0]) * vertices.size());
 }
