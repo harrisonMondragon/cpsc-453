@@ -12,3 +12,5 @@ Building and Running Instructions:
  3. Navigate to [build/Release] where there should be a HW1Starter.exe
  4. Run HW1Starter.exe by doing [./HW1Starter.exe]
  5. Use the Enter key to increase N, and use the Backspace key to decrease N
+
+ NOTE: The original arrow keys will still translate the the curve

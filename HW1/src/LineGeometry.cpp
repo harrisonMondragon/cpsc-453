@@ -53,10 +53,10 @@ void lineInitGeometryAndBuffers() {
   hilbertN = 1;
 
   vertices = {
-    glm::vec3(0.999f, -0.999f, 0.999f),
-    glm::vec3(0.999f, 0.999f, 0.999f),
-    glm::vec3(-0.999f, 0.999f, 0.999f),
-    glm::vec3(-0.999f, -0.999f, 0.999f),
+    glm::vec3(1.0f, -1.0f, 1.0f),
+    glm::vec3(1.0f, 1.0f, 1.0f),
+    glm::vec3(-1.0f, 1.0f, 1.0f),
+    glm::vec3(-1.0f, -1.0f, 1.0f),
   };
 
   // Create vertex buffer on GPU and copy data into it.
