@@ -189,10 +189,15 @@ int main(int argc, char** argv)
 	instance_create_info.pApplicationInfo = &application_info;
 	// Hook in required_extensions using VkInstanceCreateInfo::enabledExtensionCount and VkInstanceCreateInfo::ppEnabledExtensionNames!
 	// Hook in enabled_layers using VkInstanceCreateInfo::enabledLayerCount and VkInstanceCreateInfo::ppEnabledLayerNames!
+#if __APPLE__
+	required_extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	instance_create_info.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
 	instance_create_info.enabledExtensionCount = required_extensions.size();
 	instance_create_info.ppEnabledExtensionNames = required_extensions.data();
 	instance_create_info.enabledLayerCount = enabled_layers.size();
 	instance_create_info.ppEnabledLayerNames = enabled_layers.data();
+
 
 
 	// Use vkCreateInstance to create a vulkan instance handle! Assign it to vk_instance!
