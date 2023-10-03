@@ -1,7 +1,3 @@
-[submodule "VulkanLaunchpadStarter"]
-	path = VulkanLaunchpadStarter
-	url = https://github.com/cg-tuwien/VulkanLaunchpadStarter
-	branch = 63d91d5
 [submodule "VulkanLaunchpad"]
 	path = VulkanLaunchpad
 	url = https://github.com/MohammadFakhreddin/VulkanLaunchpadFix.git

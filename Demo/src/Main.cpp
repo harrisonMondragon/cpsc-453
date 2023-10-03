@@ -23,6 +23,11 @@
 #include <limits>
 #include <set>
 
+VkDevice vk_device = VK_NULL_HANDLE;
+VkPhysicalDevice vk_physical_device = VK_NULL_HANDLE;
+VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
+VkSwapchainKHR vk_swapchain = VK_NULL_HANDLE;
+
 /* ------------------------------------------------ */
 // Some more little helpers directly declared here:
 // (Definitions of functions below the main function)
@@ -38,6 +43,10 @@ void errorCallbackFromGlfw(int error, const char* description);
  *	If the ESC key has been pressed, the window will be marked that it should close.
  */
 void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods);
+
+void handleResizeCallback(GLFWwindow* window, int width, int height);
+
+VklSwapchainConfig GenerateSwapChainConfig();
 
 /*!
  *	Function that can be used to query whether or not currently, i.e. NOW, a certain button 
@@ -137,7 +146,7 @@ int main(int argc, char** argv)
 
 	// Set some window settings before creating the window:
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // No need to create a graphics context for Vulkan
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	// Get a valid window handle and assign to window:
 	GLFWwindow* window = glfwCreateWindow(window_width, window_height, window_title, nullptr, nullptr);;
@@ -152,7 +161,6 @@ int main(int argc, char** argv)
 
 	// Set up a key callback via GLFW here to handle keyboard user input:
 	glfwSetKeyCallback(window, handleGlfwKeyCallback);
-
 	/* --------------------------------------------- */
 	// Task 1.2: Create a Vulkan Instance
 	/* --------------------------------------------- */
@@ -212,8 +220,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.3: Create a Vulkan Window Surface
 	/* --------------------------------------------- */
-	VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
-
+	
 	// Use glfwCreateWindowSurface to create a window surface! Assign its handle to vk_surface!
 	result = glfwCreateWindowSurface(vk_instance, window, nullptr, &vk_surface);
 	VKL_CHECK_VULKAN_RESULT(result);
@@ -226,7 +233,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.4 Pick a Physical Device
 	/* --------------------------------------------- */
-	VkPhysicalDevice vk_physical_device = VK_NULL_HANDLE;
+
 	
 	// Use vkEnumeratePhysicalDevices get all the available physical device handles! 
 	// Select one that is suitable using hlpSelectPhysicalDeviceIndex and assign it to vk_physical_device!
@@ -283,7 +290,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.6: Create a Logical Device and Get Queue
 	/* --------------------------------------------- */
-	VkDevice vk_device = VK_NULL_HANDLE;
+	vk_device = VK_NULL_HANDLE;
 	VkQueue  vk_queue  = VK_NULL_HANDLE;
 	
 	constexpr float queue_priority = 1.0f;
@@ -336,94 +343,15 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.7: Create Swap Chain
 	/* --------------------------------------------- */
-	VkSwapchainKHR vk_swapchain = VK_NULL_HANDLE;
-
-	VkSurfaceCapabilitiesKHR surface_capabilities = hlpGetPhysicalDeviceSurfaceCapabilities(vk_physical_device, vk_surface);
-	
-	// Build the swapchain config struct:
-	// Provide values for:
-	// - VkSwapchainCreateInfoKHR::queueFamilyIndexCount
-	// - VkSwapchainCreateInfoKHR::pQueueFamilyIndices
-	// - VkSwapchainCreateInfoKHR::imageFormat
-	// - VkSwapchainCreateInfoKHR::imageColorSpace
-	// - VkSwapchainCreateInfoKHR::imageExtent
-	// - VkSwapchainCreateInfoKHR::presentMode
-	VkSwapchainCreateInfoKHR swapchain_create_info = {};
-	swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	swapchain_create_info.surface = vk_surface;
-	swapchain_create_info.minImageCount = surface_capabilities.minImageCount;
-	swapchain_create_info.imageArrayLayers = 1u;
-	swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	swapchain_create_info.preTransform = surface_capabilities.currentTransform;
-	swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	swapchain_create_info.clipped = VK_TRUE;
-	swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	
-	VkSurfaceFormatKHR surface_format = hlpGetSurfaceImageFormat(vk_physical_device, vk_surface);
-	
-	swapchain_create_info.queueFamilyIndexCount = 0;
-	swapchain_create_info.pQueueFamilyIndices = nullptr;
-	swapchain_create_info.imageFormat = surface_format.format;
-	swapchain_create_info.imageColorSpace = surface_format.colorSpace;
-	swapchain_create_info.imageExtent = surface_capabilities.currentExtent;
-	swapchain_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
-	
-	// Create the swapchain using vkCreateSwapchainKHR and assign its handle to vk_swapchain!
-	
-	result = vkCreateSwapchainKHR(vk_device, &swapchain_create_info, nullptr, &vk_swapchain);
-	VKL_CHECK_VULKAN_RESULT(result);
-	
-	if (!vk_swapchain) {
-		VKL_EXIT_WITH_ERROR("No VkSwapchainKHR created or handle not assigned.");
-	}
-	
-	// Create a vector of VkImages with enough memory for all the swap chain's images:
-	std::vector<VkImage> swap_chain_images(surface_capabilities.minImageCount);
-	// Use vkGetSwapchainImagesKHR to write VkImage handles into swap_chain_images.data()!
-	
-	result = vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &surface_capabilities.minImageCount, 
-							swap_chain_images.data());
-	VKL_CHECK_VULKAN_RESULT(result);
-	
-	if (swap_chain_images.empty()) {
-		VKL_EXIT_WITH_ERROR("Swap chain images not retrieved.");
-	}
-	VKL_LOG("Task 1.7 done.");
-
-	/* --------------------------------------------- */
-	// Task 1.8: Initialize Vulkan Launchpad
-	/* --------------------------------------------- */
-
-	// Gather swapchain config as required by the framework:
-	VklSwapchainConfig swapchain_config = {};
-	swapchain_config.imageExtent = swapchain_create_info.imageExtent;
-	swapchain_config.swapchainHandle = vk_swapchain;
-	for (VkImage vk_image : swap_chain_images) {
-		VklSwapchainFramebufferComposition framebufferData;
-		// Fill the data for the color attachment:
-		//  - VklSwapchainImageDetails::imageHandle
-		//  - VklSwapchainImageDetails::imageFormat
-		//  - VklSwapchainImageDetails::imageUsage
-		//  - VklSwapchainImageDetails::clearValue
-		framebufferData.colorAttachmentImageDetails.imageHandle = vk_image;
-		framebufferData.colorAttachmentImageDetails.imageFormat = surface_format.format;
-		framebufferData.colorAttachmentImageDetails.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		VkClearValue clearValue;
-		clearValue.color = {  0.2f, 0.2f, 0.2f, 1.0f  };		
-		framebufferData.colorAttachmentImageDetails.clearValue = clearValue;
-
-		// We don't need the depth attachment now, but keep it in mind for later!
-		framebufferData.depthAttachmentImageDetails.imageHandle = VK_NULL_HANDLE;
-		
-		// Add it to the vector:
-		swapchain_config.swapchainImages.push_back(framebufferData);
-	}
+	auto const swapchain_config = GenerateSwapChainConfig();
 	
 	// Init the framework:
 	if (!vklInitFramework(vk_instance, vk_surface, vk_physical_device, vk_device, vk_queue, swapchain_config)) {
 		VKL_EXIT_WITH_ERROR("Failed to init Vulkan Launchpad");
 	}
 	VKL_LOG("Task 1.8 done.");
+
+	glfwSetWindowSizeCallback(window, handleResizeCallback);
 
 	// Usman: ok we should now be able to pass geometry data to the GPU
 	teapotCreateGeometryAndBuffers();
@@ -480,6 +408,100 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 		glfwSetWindowShouldClose(glfw_window, true); 
 	}
 }
+
+void handleResizeCallback(GLFWwindow* window, int width, int height)
+{
+	vklNotifyResized(GenerateSwapChainConfig());
+}
+
+VklSwapchainConfig GenerateSwapChainConfig()
+{
+	VkSurfaceCapabilitiesKHR surface_capabilities = hlpGetPhysicalDeviceSurfaceCapabilities(vk_physical_device, vk_surface);
+
+	// Build the swapchain config struct:
+	// Provide values for:
+	// - VkSwapchainCreateInfoKHR::queueFamilyIndexCount
+	// - VkSwapchainCreateInfoKHR::pQueueFamilyIndices
+	// - VkSwapchainCreateInfoKHR::imageFormat
+	// - VkSwapchainCreateInfoKHR::imageColorSpace
+	// - VkSwapchainCreateInfoKHR::imageExtent
+	// - VkSwapchainCreateInfoKHR::presentMode
+	auto oldSwapChain = vk_swapchain;
+
+	VkSwapchainCreateInfoKHR swapchain_create_info = {};
+	swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	swapchain_create_info.surface = vk_surface;
+	swapchain_create_info.minImageCount = surface_capabilities.minImageCount;
+	swapchain_create_info.imageArrayLayers = 1u;
+	swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	swapchain_create_info.preTransform = surface_capabilities.currentTransform;
+	swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	swapchain_create_info.clipped = VK_TRUE;
+	swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	swapchain_create_info.oldSwapchain = oldSwapChain;
+
+	VkSurfaceFormatKHR surface_format = hlpGetSurfaceImageFormat(vk_physical_device, vk_surface);
+
+	swapchain_create_info.queueFamilyIndexCount = 0;
+	swapchain_create_info.pQueueFamilyIndices = nullptr;
+	swapchain_create_info.imageFormat = surface_format.format;
+	swapchain_create_info.imageColorSpace = surface_format.colorSpace;
+	swapchain_create_info.imageExtent = surface_capabilities.currentExtent;
+	swapchain_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+	// Create the swapchain using vkCreateSwapchainKHR and assign its handle to vk_swapchain!
+
+	auto result = vkCreateSwapchainKHR(vk_device, &swapchain_create_info, nullptr, &vk_swapchain);
+	VKL_CHECK_VULKAN_RESULT(result);
+
+	if (!vk_swapchain) {
+		VKL_EXIT_WITH_ERROR("No VkSwapchainKHR created or handle not assigned.");
+	}
+
+	// Create a vector of VkImages with enough memory for all the swap chain's images:
+	std::vector<VkImage> swap_chain_images(surface_capabilities.minImageCount);
+	// Use vkGetSwapchainImagesKHR to write VkImage handles into swap_chain_images.data()!
+
+	result = vkGetSwapchainImagesKHR(vk_device, vk_swapchain, &surface_capabilities.minImageCount,
+		swap_chain_images.data());
+	VKL_CHECK_VULKAN_RESULT(result);
+
+	if (swap_chain_images.empty()) {
+		VKL_EXIT_WITH_ERROR("Swap chain images not retrieved.");
+	}
+	VKL_LOG("Task 1.7 done.");
+
+	/* --------------------------------------------- */
+	// Task 1.8: Initialize Vulkan Launchpad
+	/* --------------------------------------------- */
+
+	// Gather swapchain config as required by the framework:
+	VklSwapchainConfig swapchain_config = {};
+	swapchain_config.imageExtent = swapchain_create_info.imageExtent;
+	swapchain_config.swapchainHandle = vk_swapchain;
+	for (VkImage vk_image : swap_chain_images) {
+		VklSwapchainFramebufferComposition framebufferData;
+		// Fill the data for the color attachment:
+		//  - VklSwapchainImageDetails::imageHandle
+		//  - VklSwapchainImageDetails::imageFormat
+		//  - VklSwapchainImageDetails::imageUsage
+		//  - VklSwapchainImageDetails::clearValue
+		framebufferData.colorAttachmentImageDetails.imageHandle = vk_image;
+		framebufferData.colorAttachmentImageDetails.imageFormat = surface_format.format;
+		framebufferData.colorAttachmentImageDetails.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		VkClearValue clearValue;
+		clearValue.color = { 0.2f, 0.2f, 0.2f, 1.0f };
+		framebufferData.colorAttachmentImageDetails.clearValue = clearValue;
+
+		// We don't need the depth attachment now, but keep it in mind for later!
+		framebufferData.depthAttachmentImageDetails.imageHandle = VK_NULL_HANDLE;
+
+		// Add it to the vector:
+		swapchain_config.swapchainImages.push_back(framebufferData);
+	}
+
+	return swapchain_config;
+} 
 
 bool isKeyDown(int glfw_key_code)
 {
