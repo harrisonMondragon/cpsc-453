@@ -29,12 +29,28 @@ namespace BufferExample
 
         ~FlatShadingPipeline();
 
+        void BindPipeline() const;
+
+        void PushConstant(PushConstants const & pushConstant) const;
+
         [[nodiscard]]
         VkPipeline GetPipeline() const;
+
+        void UpdateCameraData(const CameraData& cameraData);
 
     private:
 
         VkPipeline _pipeline {};
+
+        CameraData _cameraData{};
+
+        VkBuffer _cameraBuffer{};
+
+        VkDescriptorPool _descriptorPool{};
+
+        VkDescriptorSet _descriptorSet{};
+
+        VkPipelineLayout _pipelineLayout{};
 
     };
 }

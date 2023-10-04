@@ -41,6 +41,8 @@ add_executable(${PROJECT_NAME}
     BufferExample/Main.cpp 
     BufferExample/FlatShadingPipeline.hpp
     BufferExample/FlatShadingPipeline.cpp 
+    BufferExample/Teapot.h
+    BufferExample/Teapot.cpp 
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE VulkanLaunchpad)
 target_include_directories(${PROJECT_NAME} PRIVATE VulkanLaunchpad/src)

@@ -24,6 +24,8 @@
 #include <limits>
 #include <set>
 
+#include "Teapot.h"
+
 VkDevice vk_device = VK_NULL_HANDLE;
 VkPhysicalDevice vk_physical_device = VK_NULL_HANDLE;
 VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
@@ -353,9 +355,24 @@ int main(int argc, char** argv)
 	VKL_LOG("Task 1.8 done.");
 
 	{
-		BufferExample::FlatShadingPipeline flPipeline{};
+		using namespace BufferExample;
+
+		FlatShadingPipeline flPipeline{};
+		flPipeline.UpdateCameraData(FlatShadingPipeline::CameraData {
+			.projection = glm::identity<glm::mat4>(),
+			.view = glm::identity<glm::mat4>(),
+		});
+
+		TeapotRenderer teapotRenderer{};
 
 		glfwSetWindowSizeCallback(window, handleResizeCallback);
+
+		auto greenTeapotMat = glm::identity<glm::mat4>();
+
+		auto redTeapotMat = 
+			glm::translate(glm::identity<glm::mat4>(), { 0.1f, 0.0f, 0.0f }) * 
+			glm::scale(glm::identity<glm::mat4>(), { 0.5f, -0.5f, 0.5f }) * 
+			glm::identity<glm::mat4>();
 
 		/* --------------------------------------------- */
 		// Task 1.9:  Implement the Render Loop
@@ -365,10 +382,23 @@ int main(int argc, char** argv)
 			vklStartRecordingCommands();
 
 			// Your commands here
-			auto const & cb = vklGetCurrentCommandBuffer();
+			flPipeline.BindPipeline();
 
-			vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, flPipeline.GetPipeline());
 			//vklSetPushConstants()
+			teapotRenderer.BindIndexBuffer();
+			teapotRenderer.BindVertexBuffer();
+
+			flPipeline.PushConstant(FlatShadingPipeline::PushConstants{
+				.model = greenTeapotMat,
+				.color = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f}
+			});
+			teapotRenderer.DrawIndexed();
+
+			flPipeline.PushConstant(FlatShadingPipeline::PushConstants{
+				.model = redTeapotMat,
+				.color = glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f }
+			});
+			teapotRenderer.DrawIndexed();
 
 			vklEndRecordingCommands();
 			vklPresentCurrentSwapchainImage();
