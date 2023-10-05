@@ -1,22 +1,20 @@
-/**
- * A complete demo that fills in the TO DO tasks in VulkanLaunchpadStarter
- * and adds a teapot rendered using the basic pipeline.
- *
+/** 
+ * Starter main file for HW2.
+ * 
  * CPSC 453 | Fall 2023 | University of Calgary
- *
+ * 
  * @author Usman Alim
  */
 
 
- // Include our framework and the Vulkan headers:
+// Include our framework and the Vulkan headers:
 #include "VulkanLaunchpad.h"
 #include "Camera.h"
+#include <vulkan/vulkan.h>
+
 // Include some local helper functions:
 #include "VulkanHelpers.h"
-#include "FlatShadingPipeline.hpp"
-
-#include <vulkan/vulkan.h>
-#include <VulkanLaunchpad.h>
+#include "Object.h"
 
 // Include functionality from the standard library:
 #include <vector>
@@ -24,12 +22,13 @@
 #include <limits>
 #include <set>
 
-#include "Teapot.h"
+// vulkan related variables that are globally accessible.
 
 VkDevice vk_device = VK_NULL_HANDLE;
 VkPhysicalDevice vk_physical_device = VK_NULL_HANDLE;
 VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
 VkSwapchainKHR vk_swapchain = VK_NULL_HANDLE;
+
 /* ------------------------------------------------ */
 // Some more little helpers directly declared here:
 // (Definitions of functions below the main function)
@@ -46,14 +45,17 @@ void errorCallbackFromGlfw(int error, const char* description);
  */
 void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods);
 
+/*!
+ *	Functions needed to handle window resize.
+ */
 void handleResizeCallback(GLFWwindow* window, int width, int height);
-
 VklSwapchainConfig GenerateSwapChainConfig();
 
+
 /*!
- *	Function that can be used to query whether or not currently, i.e. NOW, a certain button
- *  is pressed down, or not.
- *  @param	glfw_key_code	One of the GLFW key codes.
+ *	Function that can be used to query whether or not currently, i.e. NOW, a certain button 
+ *  is pressed down, or not. 
+ *  @param	glfw_key_code	One of the GLFW key codes. 
  *                          I.e., use one of the defines that start with GLFW_KEY_*
  *  @return True if the given key is currently pressed down, false otherwise (i.e. released).
  */
@@ -69,7 +71,7 @@ bool isKeyDown(int glfw_key_code);
  *	            VkInstanceCreateInfo create_info    = {};
  *	            create_info.enabledExtensionCount   = extensions.size();
  *	            create_info.ppEnabledExtensionNames = extensions.data();
- */
+ */ 
 std::vector<const char*> getRequiredInstanceExtensions();
 
 /*!
@@ -116,10 +118,13 @@ static std::vector<char const*> FilterSupportedLayers(std::vector<char const*> c
 	return result;
 }
 
+
+// variables that are modified via keyboard controls
+float angle = 0.0f;
+
 /* ------------------------------------------------ */
 // Main
 /* ------------------------------------------------ */
-
 int main(int argc, char** argv)
 {
 	VKL_LOG(":::::: WELCOME TO VULKAN LAUNCHPAD ::::::");
@@ -135,10 +140,10 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.1: Create a Window with GLFW
 	/* --------------------------------------------- */
-	constexpr int window_width = 800;
+	constexpr int window_width  = 800;
 	constexpr int window_height = 800;
 	constexpr bool fullscreen = false;
-	constexpr char const* window_title = "CPSC 453: VulkanLaunchpadStarter Complete Demo";
+	constexpr char* window_title = "CPSC 453: HW2 Starter";
 
 	// Use a monitor if we'd like to open the window in fullscreen mode:
 	GLFWmonitor* monitor = nullptr;
@@ -152,7 +157,7 @@ int main(int argc, char** argv)
 
 	// Get a valid window handle and assign to window:
 	GLFWwindow* window = glfwCreateWindow(window_width, window_height, window_title, nullptr, nullptr);;
-
+	
 	if (!window) {
 		VKL_LOG("If your program reaches this point, that means two things:");
 		VKL_LOG("1) Project setup was successful. Everything is working fine.");
@@ -163,6 +168,7 @@ int main(int argc, char** argv)
 
 	// Set up a key callback via GLFW here to handle keyboard user input:
 	glfwSetKeyCallback(window, handleGlfwKeyCallback);
+
 	/* --------------------------------------------- */
 	// Task 1.2: Create a Vulkan Instance
 	/* --------------------------------------------- */
@@ -209,7 +215,6 @@ int main(int argc, char** argv)
 	instance_create_info.ppEnabledLayerNames = enabled_layers.data();
 
 
-
 	// Use vkCreateInstance to create a vulkan instance handle! Assign it to vk_instance!
 	VkResult result = vkCreateInstance(&instance_create_info, nullptr, &vk_instance);
 	VKL_CHECK_VULKAN_RESULT(result);
@@ -218,15 +223,16 @@ int main(int argc, char** argv)
 		VKL_EXIT_WITH_ERROR("No VkInstance created or handle not assigned.");
 	}
 	VKL_LOG("Task 1.2 done.");
-
+	
 	/* --------------------------------------------- */
 	// Task 1.3: Create a Vulkan Window Surface
 	/* --------------------------------------------- */
+	vk_surface = VK_NULL_HANDLE;
 
 	// Use glfwCreateWindowSurface to create a window surface! Assign its handle to vk_surface!
 	result = glfwCreateWindowSurface(vk_instance, window, nullptr, &vk_surface);
 	VKL_CHECK_VULKAN_RESULT(result);
-
+	
 	if (!vk_surface) {
 		VKL_EXIT_WITH_ERROR("No VkSurfaceKHR created or handle not assigned.");
 	}
@@ -235,8 +241,8 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.4 Pick a Physical Device
 	/* --------------------------------------------- */
-
-
+	vk_physical_device = VK_NULL_HANDLE;
+	
 	// Use vkEnumeratePhysicalDevices get all the available physical device handles! 
 	// Select one that is suitable using hlpSelectPhysicalDeviceIndex and assign it to vk_physical_device!
 
@@ -245,17 +251,8 @@ int main(int argc, char** argv)
 	std::vector<VkPhysicalDevice> physical_devices(device_count);
 	result = vkEnumeratePhysicalDevices(vk_instance, &device_count, physical_devices.data());
 	VKL_CHECK_VULKAN_RESULT(result);
-
-	VKL_LOG("Available gpus are:");
-	for (auto const& physicalDevice : physical_devices)
-	{
-		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-		printf("Device name: %s, Driver version: %u\n", properties.deviceName, properties.driverVersion);
-	}
-
 	//std::cout << "Device Count: " << device_count << std::endl;
-	vk_physical_device = physical_devices[hlpSelectPhysicalDeviceIndex(physical_devices, vk_surface)];
+	vk_physical_device = physical_devices[hlpSelectPhysicalDeviceIndex( physical_devices, vk_surface)];
 
 	if (!vk_physical_device) {
 		VKL_EXIT_WITH_ERROR("No VkPhysicalDevice selected or handle not assigned.");
@@ -275,7 +272,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.5: Select a Queue Family
 	/* --------------------------------------------- */
-
+	
 	// Find a suitable queue family and assign its index to the following variable:
 	// Hint: Use selectQueueFamilyIndex, but complete its implementation before!
 	//uint32_t selected_queue_family_index = std::numeric_limits<uint32_t>::max();
@@ -293,8 +290,8 @@ int main(int argc, char** argv)
 	// Task 1.6: Create a Logical Device and Get Queue
 	/* --------------------------------------------- */
 	vk_device = VK_NULL_HANDLE;
-	VkQueue  vk_queue = VK_NULL_HANDLE;
-
+	VkQueue  vk_queue  = VK_NULL_HANDLE;
+	
 	constexpr float queue_priority = 1.0f;
 
 	VkDeviceQueueCreateInfo queue_create_info = {};
@@ -302,20 +299,20 @@ int main(int argc, char** argv)
 	queue_create_info.queueFamilyIndex = selected_queue_family_index;
 	queue_create_info.queueCount = 1;
 	queue_create_info.pQueuePriorities = &queue_priority;
-
+	
 	// Create an instance of VkDeviceCreateInfo and use it to create one queue!
 	// - Hook in queue_create_info at the right place!
 	// - Use VkDeviceCreateInfo::enabledExtensionCount and VkDeviceCreateInfo::ppEnabledExtensionNames
 	//   to enable the VK_KHR_SWAPCHAIN_EXTENSION_NAME device extension!
 	// - The other parameters are not required (ensure that they are zero-initialized).
 	//   Finally, use vkCreateDevice to create the device and assign its handle to vk_device!
-
+	
 	std::vector<const char*> device_extensions = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
 	// For Macos compatibility
-	auto const supportedExtension = FilterSupportedLayers(std::vector<char const*>{
+	auto const supportedExtension = FilterSupportedLayers(std::vector<char const *>{
 		VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
 	});
 	device_extensions.insert(device_extensions.end(), supportedExtension.begin(), supportedExtension.end());
@@ -326,13 +323,20 @@ int main(int argc, char** argv)
 	device_create_info.queueCreateInfoCount = 1;
 	device_create_info.enabledExtensionCount = device_extensions.size();
 	device_create_info.ppEnabledExtensionNames = device_extensions.data();
+	
+	VkPhysicalDeviceFeatures features = {};
+	vkGetPhysicalDeviceFeatures(vk_physical_device, &features);
+	features.fillModeNonSolid = VK_TRUE;
+	features.wideLines = VK_TRUE;
+	
+	device_create_info.pEnabledFeatures = &features;	
 	result = vkCreateDevice(vk_physical_device, &device_create_info, nullptr, &vk_device);
 	VKL_CHECK_VULKAN_RESULT(result);
 
 	if (!vk_device) {
 		VKL_EXIT_WITH_ERROR("No VkDevice created or handle not assigned.");
 	}
-
+	
 	// After device creation, use vkGetDeviceQueue to get the one and only created queue!
 	// Assign its handle to vk_queue!
 	vkGetDeviceQueue(vk_device, selected_queue_family_index, 0, &vk_queue);
@@ -340,77 +344,59 @@ int main(int argc, char** argv)
 		VKL_EXIT_WITH_ERROR("No VkQueue selected or handle not assigned.");
 	}
 
+
 	VKL_LOG("Task 1.6 done.");
 
 	/* --------------------------------------------- */
 	// Task 1.7: Create Swap Chain
 	/* --------------------------------------------- */
+	
+	// swapchain config moved to a separate function
+	// so that the swapchain can be recreated on 
+	// window resize.
 	auto const swapchain_config = GenerateSwapChainConfig();
+	
+	VKL_LOG("Task 1.7 done.");
+
+	/* --------------------------------------------- */
+	// Task 1.8: Initialize Vulkan Launchpad
+	/* --------------------------------------------- */
 
 	// Init the framework:
 	if (!vklInitFramework(vk_instance, vk_surface, vk_physical_device, vk_device, vk_queue, swapchain_config)) {
 		VKL_EXIT_WITH_ERROR("Failed to init Vulkan Launchpad");
 	}
-	
 	VKL_LOG("Task 1.8 done.");
 
-	{
-		using namespace BufferExample;
+ 	// At this point, we can register window resize callback
+	glfwSetWindowSizeCallback(window, handleResizeCallback);
 
-		FlatShadingPipeline flPipeline{};
-		flPipeline.UpdateCameraData(FlatShadingPipeline::CameraData {
-			.projection = glm::identity<glm::mat4>(),
-			.view = glm::identity<glm::mat4>(),
-		});
 
-		TeapotRenderer teapotRenderer{};
+	// Now create initial geometry and pass it to the GPU
+	objectCreateGeometryAndBuffers();
+	
+	/* --------------------------------------------- */
+	// Task 1.9:  Implement the Render Loop
+	/* --------------------------------------------- */
+	while (!glfwWindowShouldClose(window)) {
+		vklWaitForNextSwapchainImage();
+    	vklStartRecordingCommands();
+		
+    	// Your commands here
+		objectDraw();
 
-		glfwSetWindowSizeCallback(window, handleResizeCallback);
-
-		auto greenTeapotMat = glm::identity<glm::mat4>();
-
-		auto redTeapotMat = 
-			glm::translate(glm::identity<glm::mat4>(), { 0.1f, 0.0f, 0.0f }) * 
-			glm::scale(glm::identity<glm::mat4>(), { 0.5f, -0.5f, 0.5f }) * 
-			glm::identity<glm::mat4>();
-
-		/* --------------------------------------------- */
-		// Task 1.9:  Implement the Render Loop
-		/* --------------------------------------------- */
-		while (!glfwWindowShouldClose(window)) {
-			vklWaitForNextSwapchainImage();
-			vklStartRecordingCommands();
-
-			// Your commands here
-			flPipeline.BindPipeline();
-
-			//vklSetPushConstants()
-			teapotRenderer.BindIndexBuffer();
-			teapotRenderer.BindVertexBuffer();
-
-			flPipeline.PushConstant(FlatShadingPipeline::PushConstants{
-				.model = greenTeapotMat,
-				.color = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f}
-			});
-			teapotRenderer.DrawIndexed();
-
-			flPipeline.PushConstant(FlatShadingPipeline::PushConstants{
-				.model = redTeapotMat,
-				.color = glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f }
-			});
-			teapotRenderer.DrawIndexed();
-
-			vklEndRecordingCommands();
-			vklPresentCurrentSwapchainImage();
-			glfwPollEvents(); // Handle user input
-		}
-
-		// Wait for all GPU work to finish before cleaning up:
-		vkDeviceWaitIdle(vk_device);
+    	vklEndRecordingCommands();
+    	vklPresentCurrentSwapchainImage();
+		glfwPollEvents(); // Handle user input
 	}
+
+	// Wait for all GPU work to finish before cleaning up:
+	vkDeviceWaitIdle(vk_device);
+
 	/* --------------------------------------------- */
 	// Task 1.10: Cleanup
 	/* --------------------------------------------- */
+	objectDestroyBuffers();
 	vklDestroyFramework();
 
 	return EXIT_SUCCESS;
@@ -426,7 +412,7 @@ void errorCallbackFromGlfw(int error, const char* description) {
 
 std::unordered_map<int, bool> g_isGlfwKeyDown;
 
-void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods)
+void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) 
 {
 	if (action == GLFW_PRESS) {
 		g_isGlfwKeyDown[key] = true;
@@ -436,9 +422,17 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 		g_isGlfwKeyDown[key] = false;
 	}
 
+	if( key == GLFW_KEY_RIGHT && action == GLFW_REPEAT ) {
+		angle += 0.1f;
+	}
+
+	if( key == GLFW_KEY_LEFT && action == GLFW_REPEAT ) {
+		angle -= 0.1f;
+	}
+
 	// We mark the window that it should close if ESC is pressed:
-	if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) {
-		glfwSetWindowShouldClose(glfw_window, true);
+	if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) { 
+		glfwSetWindowShouldClose(glfw_window, true); 
 	}
 }
 
@@ -502,12 +496,7 @@ VklSwapchainConfig GenerateSwapChainConfig()
 	if (swap_chain_images.empty()) {
 		VKL_EXIT_WITH_ERROR("Swap chain images not retrieved.");
 	}
-	VKL_LOG("Task 1.7 done.");
-
-	/* --------------------------------------------- */
-	// Task 1.8: Initialize Vulkan Launchpad
-	/* --------------------------------------------- */
-
+	
 	// Gather swapchain config as required by the framework:
 	VklSwapchainConfig swapchain_config = {};
 	swapchain_config.imageExtent = swapchain_create_info.imageExtent;
@@ -526,15 +515,30 @@ VklSwapchainConfig GenerateSwapChainConfig()
 		clearValue.color = { 0.2f, 0.2f, 0.2f, 1.0f };
 		framebufferData.colorAttachmentImageDetails.clearValue = clearValue;
 
-		// We don't need the depth attachment now, but keep it in mind for later!
-		framebufferData.depthAttachmentImageDetails.imageHandle = VK_NULL_HANDLE;
-
+		// Let's also add a depth attachment for HW2
+		VkImage depthImage = vklCreateDeviceLocalImageWithBackingMemory(
+			vk_physical_device,
+			vk_device,
+			swapchain_config.imageExtent.width,
+		 	swapchain_config.imageExtent.height, 
+			VK_FORMAT_D32_SFLOAT,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );		
+		framebufferData.depthAttachmentImageDetails.imageHandle = depthImage;
+		framebufferData.depthAttachmentImageDetails.imageFormat = VK_FORMAT_D32_SFLOAT;
+		framebufferData.depthAttachmentImageDetails.imageUsage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		VkClearValue depthClear;
+		depthClear.depthStencil.depth = 1.f;
+		framebufferData.depthAttachmentImageDetails.clearValue  = depthClear;
+		
 		// Add it to the vector:
 		swapchain_config.swapchainImages.push_back(framebufferData);
 	}
 
 	return swapchain_config;
-}
+} 
+
+
+
 
 bool isKeyDown(int glfw_key_code)
 {
@@ -575,26 +579,26 @@ uint32_t selectQueueFamilyIndex(VkPhysicalDevice physical_device, VkSurfaceKHR s
 	// Get the queue families' data:
 	std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families.data());
-
+	
 	// Find a suitable queue family index and return it!
 
 	// This is mostly done in VulkanHelpers.cpp. Borrowing from there.
 
 	for (uint32_t queue_family_index = 0u; queue_family_index < queue_family_count; ++queue_family_index) {
-		// If this physical device supports a queue family which supports both, graphics and presentation
-		//  => select this physical device
-		if ((queue_families[queue_family_index].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
-			// This queue supports graphics! Let's see if it also supports presentation:
-			VkBool32 presentation_supported;
-			vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &presentation_supported);
+			// If this physical device supports a queue family which supports both, graphics and presentation
+			//  => select this physical device
+			if ((queue_families[queue_family_index].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
+				// This queue supports graphics! Let's see if it also supports presentation:
+				VkBool32 presentation_supported;
+				vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &presentation_supported);
 
-			if (VK_TRUE == presentation_supported) {
-				// We've found a suitable queue
-				return queue_family_index;
+				if (VK_TRUE == presentation_supported) {
+					// We've found a suitable queue
+					return queue_family_index;
+				}
 			}
 		}
-	}
 
-
+	
 	VKL_EXIT_WITH_ERROR("Unable to find a suitable queue family that supports graphics and presentation on the same queue.");
 }

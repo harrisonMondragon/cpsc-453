@@ -1,4 +1,4 @@
-# 453VulkanStarter
+# 453HW2Starter
 
 This repository contains starter code that you can use for homework assignments in CPSC 453 (Introduction to Computer Graphics) at the University of Calgary.
 
@@ -6,7 +6,7 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 
 ## Setup
 
-1. Clone this repository using the ```https``` address.
+1. Clone this repository using the ```https``` address and switch to the `HW2` branch. 
     ```
     git clone <https address>
     ```
@@ -14,7 +14,7 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
     ```
     mkdir build
     ```
-3. Use the cmake to generate the necessary files for compiling the project. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter`` to setup your IDE and build environment. For this step, you can either use cmake-gui or run the cmake command directly in the terminal:
+3. Use cmake to generate the necessary files for compiling the project. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter`` to setup your IDE and build environment. For this step, you can either use cmake-gui or run the cmake command directly in the terminal:
     ```
     cd build
     cmake ..
@@ -27,7 +27,7 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 
 ## Troubleshooting
 
-- Make sure that Vulkan sdk is installed correctly. You can verify this by running the vkCube application. (Installed automatically when you install Vulkan sdk)
+- Make sure that Vulkan SDK is installed correctly. You can verify this by running the vkCube application. (Installed automatically when you install Vulkan SDK)
 
 - For Linux, you need to install build-essentials.
 
@@ -37,7 +37,10 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 
 ## Available Examples and Skeletons
 
-This repository consists of the following:
-- `/Demo`:
+This branch consists of the following:
+- `/HW2`:
 
-  A fully functioning example that renders a teapot using the basic graphics pipeline provided by `VulkanLaunchpad`. It is just a completion of the TO DO tasks left out in the example provided by `VulkanLaunchpadStarter`.
+  Starter code for HW2 which is a functioning example that renders a teapot using a graphics pipeline that supports vertex and fragment shaders, and push constants to send model, view and projection matrices to the shaders. It also adds a depth attachment so that models can be rendered with correct depth. Shaders demonstrate how vertex data (random per-vertex colors in this example) are interpolated inside triangles 
+  between the vertex and fragment shader stages. 
+  
+  A very simple rotation control is provided. Use the LEFT and RIGHT arrows to rotate the teapot. 
