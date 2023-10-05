@@ -140,10 +140,10 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.1: Create a Window with GLFW
 	/* --------------------------------------------- */
-	constexpr int window_width  = 800;
-	constexpr int window_height = 800;
-	constexpr bool fullscreen = false;
-	constexpr char* window_title = "CPSC 453: HW2 Starter";
+	static constexpr int window_width  = 800;
+	static constexpr int window_height = 800;
+	static constexpr bool fullscreen = false;
+	static constexpr char const * window_title = "CPSC 453: HW2 Starter";
 
 	// Use a monitor if we'd like to open the window in fullscreen mode:
 	GLFWmonitor* monitor = nullptr;

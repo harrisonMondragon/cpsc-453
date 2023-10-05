@@ -5,7 +5,6 @@
 #include "Object.h"
 #include <VulkanLaunchpad.h>
 #include <vulkan/vulkan.hpp>
-
 #include <random>
 
 // buffers that will live on the GPU.
@@ -392,7 +391,7 @@ void objectCreatePipeline() {
 	
 	// Create a projection matrix compatible with Vulkan.
 	// The resulting matrix takes care of the y-z flip.
-	pushConstants.proj = vklCreatePerspectiveProjectionMatrix(M_PI / 3.0f, 1.0f, 1.0f, 3.0f );
+	pushConstants.proj = vklCreatePerspectiveProjectionMatrix(glm::pi<float>() / 3.0f, 1.0f, 1.0f, 3.0f );
 
 	// ------------------------------
 	// Pipeline creation
