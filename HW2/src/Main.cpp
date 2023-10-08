@@ -1,8 +1,8 @@
-/** 
+/**
  * Starter main file for HW2.
- * 
+ *
  * CPSC 453 | Fall 2023 | University of Calgary
- * 
+ *
  * @author Usman Alim
  */
 
@@ -53,9 +53,9 @@ VklSwapchainConfig GenerateSwapChainConfig();
 
 
 /*!
- *	Function that can be used to query whether or not currently, i.e. NOW, a certain button 
- *  is pressed down, or not. 
- *  @param	glfw_key_code	One of the GLFW key codes. 
+ *	Function that can be used to query whether or not currently, i.e. NOW, a certain button
+ *  is pressed down, or not.
+ *  @param	glfw_key_code	One of the GLFW key codes.
  *                          I.e., use one of the defines that start with GLFW_KEY_*
  *  @return True if the given key is currently pressed down, false otherwise (i.e. released).
  */
@@ -71,7 +71,7 @@ bool isKeyDown(int glfw_key_code);
  *	            VkInstanceCreateInfo create_info    = {};
  *	            create_info.enabledExtensionCount   = extensions.size();
  *	            create_info.ppEnabledExtensionNames = extensions.data();
- */ 
+ */
 std::vector<const char*> getRequiredInstanceExtensions();
 
 /*!
@@ -157,7 +157,7 @@ int main(int argc, char** argv)
 
 	// Get a valid window handle and assign to window:
 	GLFWwindow* window = glfwCreateWindow(window_width, window_height, window_title, nullptr, nullptr);;
-	
+
 	if (!window) {
 		VKL_LOG("If your program reaches this point, that means two things:");
 		VKL_LOG("1) Project setup was successful. Everything is working fine.");
@@ -223,7 +223,7 @@ int main(int argc, char** argv)
 		VKL_EXIT_WITH_ERROR("No VkInstance created or handle not assigned.");
 	}
 	VKL_LOG("Task 1.2 done.");
-	
+
 	/* --------------------------------------------- */
 	// Task 1.3: Create a Vulkan Window Surface
 	/* --------------------------------------------- */
@@ -232,7 +232,7 @@ int main(int argc, char** argv)
 	// Use glfwCreateWindowSurface to create a window surface! Assign its handle to vk_surface!
 	result = glfwCreateWindowSurface(vk_instance, window, nullptr, &vk_surface);
 	VKL_CHECK_VULKAN_RESULT(result);
-	
+
 	if (!vk_surface) {
 		VKL_EXIT_WITH_ERROR("No VkSurfaceKHR created or handle not assigned.");
 	}
@@ -242,7 +242,7 @@ int main(int argc, char** argv)
 	// Task 1.4 Pick a Physical Device
 	/* --------------------------------------------- */
 	vk_physical_device = VK_NULL_HANDLE;
-	
+
 	// Use vkEnumeratePhysicalDevices get all the available physical device handles! 
 	// Select one that is suitable using hlpSelectPhysicalDeviceIndex and assign it to vk_physical_device!
 
@@ -272,7 +272,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.5: Select a Queue Family
 	/* --------------------------------------------- */
-	
+
 	// Find a suitable queue family and assign its index to the following variable:
 	// Hint: Use selectQueueFamilyIndex, but complete its implementation before!
 	//uint32_t selected_queue_family_index = std::numeric_limits<uint32_t>::max();
@@ -291,7 +291,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	vk_device = VK_NULL_HANDLE;
 	VkQueue  vk_queue  = VK_NULL_HANDLE;
-	
+
 	constexpr float queue_priority = 1.0f;
 
 	VkDeviceQueueCreateInfo queue_create_info = {};
@@ -299,14 +299,14 @@ int main(int argc, char** argv)
 	queue_create_info.queueFamilyIndex = selected_queue_family_index;
 	queue_create_info.queueCount = 1;
 	queue_create_info.pQueuePriorities = &queue_priority;
-	
+
 	// Create an instance of VkDeviceCreateInfo and use it to create one queue!
 	// - Hook in queue_create_info at the right place!
 	// - Use VkDeviceCreateInfo::enabledExtensionCount and VkDeviceCreateInfo::ppEnabledExtensionNames
 	//   to enable the VK_KHR_SWAPCHAIN_EXTENSION_NAME device extension!
 	// - The other parameters are not required (ensure that they are zero-initialized).
 	//   Finally, use vkCreateDevice to create the device and assign its handle to vk_device!
-	
+
 	std::vector<const char*> device_extensions = {
     	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
@@ -323,20 +323,20 @@ int main(int argc, char** argv)
 	device_create_info.queueCreateInfoCount = 1;
 	device_create_info.enabledExtensionCount = device_extensions.size();
 	device_create_info.ppEnabledExtensionNames = device_extensions.data();
-	
+
 	VkPhysicalDeviceFeatures features = {};
 	vkGetPhysicalDeviceFeatures(vk_physical_device, &features);
 	features.fillModeNonSolid = VK_TRUE;
 	features.wideLines = VK_TRUE;
-	
-	device_create_info.pEnabledFeatures = &features;	
+
+	device_create_info.pEnabledFeatures = &features;
 	result = vkCreateDevice(vk_physical_device, &device_create_info, nullptr, &vk_device);
 	VKL_CHECK_VULKAN_RESULT(result);
 
 	if (!vk_device) {
 		VKL_EXIT_WITH_ERROR("No VkDevice created or handle not assigned.");
 	}
-	
+
 	// After device creation, use vkGetDeviceQueue to get the one and only created queue!
 	// Assign its handle to vk_queue!
 	vkGetDeviceQueue(vk_device, selected_queue_family_index, 0, &vk_queue);
@@ -350,12 +350,12 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.7: Create Swap Chain
 	/* --------------------------------------------- */
-	
+
 	// swapchain config moved to a separate function
-	// so that the swapchain can be recreated on 
+	// so that the swapchain can be recreated on
 	// window resize.
 	auto const swapchain_config = GenerateSwapChainConfig();
-	
+
 	VKL_LOG("Task 1.7 done.");
 
 	/* --------------------------------------------- */
@@ -374,14 +374,14 @@ int main(int argc, char** argv)
 
 	// Now create initial geometry and pass it to the GPU
 	objectCreateGeometryAndBuffers();
-	
+
 	/* --------------------------------------------- */
 	// Task 1.9:  Implement the Render Loop
 	/* --------------------------------------------- */
 	while (!glfwWindowShouldClose(window)) {
 		vklWaitForNextSwapchainImage();
     	vklStartRecordingCommands();
-		
+
     	// Your commands here
 		objectDraw();
 
@@ -412,7 +412,7 @@ void errorCallbackFromGlfw(int error, const char* description) {
 
 std::unordered_map<int, bool> g_isGlfwKeyDown;
 
-void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) 
+void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods)
 {
 	if (action == GLFW_PRESS) {
 		g_isGlfwKeyDown[key] = true;
@@ -431,8 +431,8 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 	}
 
 	// We mark the window that it should close if ESC is pressed:
-	if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) { 
-		glfwSetWindowShouldClose(glfw_window, true); 
+	if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) {
+		glfwSetWindowShouldClose(glfw_window, true);
 	}
 }
 
@@ -496,7 +496,7 @@ VklSwapchainConfig GenerateSwapChainConfig()
 	if (swap_chain_images.empty()) {
 		VKL_EXIT_WITH_ERROR("Swap chain images not retrieved.");
 	}
-	
+
 	// Gather swapchain config as required by the framework:
 	VklSwapchainConfig swapchain_config = {};
 	swapchain_config.imageExtent = swapchain_create_info.imageExtent;
@@ -520,22 +520,22 @@ VklSwapchainConfig GenerateSwapChainConfig()
 			vk_physical_device,
 			vk_device,
 			swapchain_config.imageExtent.width,
-		 	swapchain_config.imageExtent.height, 
+		 	swapchain_config.imageExtent.height,
 			VK_FORMAT_D32_SFLOAT,
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );		
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );
 		framebufferData.depthAttachmentImageDetails.imageHandle = depthImage;
 		framebufferData.depthAttachmentImageDetails.imageFormat = VK_FORMAT_D32_SFLOAT;
 		framebufferData.depthAttachmentImageDetails.imageUsage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		VkClearValue depthClear;
 		depthClear.depthStencil.depth = 1.f;
 		framebufferData.depthAttachmentImageDetails.clearValue  = depthClear;
-		
+
 		// Add it to the vector:
 		swapchain_config.swapchainImages.push_back(framebufferData);
 	}
 
 	return swapchain_config;
-} 
+}
 
 
 
@@ -579,7 +579,7 @@ uint32_t selectQueueFamilyIndex(VkPhysicalDevice physical_device, VkSurfaceKHR s
 	// Get the queue families' data:
 	std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families.data());
-	
+
 	// Find a suitable queue family index and return it!
 
 	// This is mostly done in VulkanHelpers.cpp. Borrowing from there.
@@ -599,6 +599,6 @@ uint32_t selectQueueFamilyIndex(VkPhysicalDevice physical_device, VkSurfaceKHR s
 			}
 		}
 
-	
+
 	VKL_EXIT_WITH_ERROR("Unable to find a suitable queue family that supports graphics and presentation on the same queue.");
 }

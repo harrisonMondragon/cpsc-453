@@ -21,7 +21,7 @@ VkPipeline pipeline;
 struct Vertex {
 	glm::vec3 position;
     glm::vec3 normal;
-}; 
+};
 
 // Send model, view and projection matrices as push constants
 // which are packed in this struct
@@ -37,11 +37,11 @@ ObjectPushConstants pushConstants;
 // Simple interactive rotation of object controlled by an angle
 extern float angle;
 
-// Organize geometry data and send it to the GPU 
-void objectCreateGeometryAndBuffers() 
+// Organize geometry data and send it to the GPU
+void objectCreateGeometryAndBuffers()
 {
-	
-	// Geometry data for an icosahedron. 
+
+	// Geometry data for an icosahedron.
 	// Uncomment if you want to test.
 
 	// Icosahedron positions
@@ -58,10 +58,10 @@ void objectCreateGeometryAndBuffers()
 		glm::vec3{-0.262866,-0.809017,-0.425325},
 		glm::vec3{-0.262866,0.809017,-0.425325},
 		glm::vec3{0.262866,-0.809017,0.425325},
-		glm::vec3{0.262866,0.809017,0.425325} 
+		glm::vec3{0.262866,0.809017,0.425325}
 	};
 	*/
-	
+
 	// Icosahedron face indices
 	/*
 	std::vector<unsigned int> indices = {
@@ -84,11 +84,11 @@ void objectCreateGeometryAndBuffers()
 		5,3,4,
 		9,11,5,
 		2,7,9,
-		8,6,2 
+		8,6,2
 	};
 	*/
-	
-	// Teapot for HW2 Starter 
+
+	// Teapot for HW2 Starter
 	// Positions of vertices
 	std::vector<glm::vec3> positions = {
 		glm::vec3(-0.0112664,0.188986,-0.392027), glm::vec3(0.187941,0.188986,-0.339176), glm::vec3(0.327909,0.188986,-0.199208), glm::vec3(0.38076,0.188986,-9.72432e-10),
@@ -222,18 +222,18 @@ void objectCreateGeometryAndBuffers()
 	};
 
 	// random number generator for assigning random per-vertex normal data.
-	std::random_device rd;  
-    std::mt19937 gen(rd()); 
+	std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0, 1.0);
-	
+
 	// Create a vector to interleave and pack all vertex data into one vector.
 	std::vector<Vertex> vData( positions.size() );
 	for( unsigned int i = 0; i < vData.size(); i++ ) {
 		vData[i].position = positions[i];
 		vData[i].normal = glm::vec3( dis(gen), dis(gen), dis(gen) );
 	}
-	
-	// Teapot indices of triangles 
+
+	// Teapot indices of triangles
 	std::vector<unsigned int> indices = {
 		0,5,4, 0,1,5, 1,6,5, 1,2,6, 2,7,6, 2,3,7, 4,9,8, 4,5,9, 5,10,9, 5,6,10,
 		6,11,10, 6,7,11, 8,13,12, 8,9,13, 9,14,13, 9,10,14, 10,15,14, 10,11,15, 16,21,20, 16,17,21,
@@ -300,7 +300,7 @@ void objectCreateGeometryAndBuffers()
 	auto dispatchLoader = vk::DispatchLoaderStatic();
 
 	// 1. Vertex BUFFER (Buffer, Memory, Bind 'em together, copy data into it)
-	{ 
+	{
 		// Use VulkanLaunchpad functionality to manage buffers
 		// All vertex data is in one vector, copied to one buffer
 		// on the GPU
@@ -321,7 +321,7 @@ void objectCreateGeometryAndBuffers()
 }
 
 
-// Cleanup buffers and pipeline created on the GPU 
+// Cleanup buffers and pipeline created on the GPU
 void objectDestroyBuffers() {
 	auto device = vklGetDevice();
 	vkDeviceWaitIdle( device );
@@ -353,9 +353,9 @@ void objectDraw(VkPipeline pipeline)
     // upload the matrix to the GPU via push constants
 	objectUpdateConstants();
     vklSetPushConstants(
-			pipeline, 
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 
-			&pushConstants, 
+			pipeline,
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			&pushConstants,
 			sizeof(ObjectPushConstants)
 		);
 
@@ -378,7 +378,7 @@ void objectCreatePipeline() {
 
 	// initialize push constants
 	pushConstants.model = glm::mat4{ 1.0f };
-	
+
 	// a right-handed view coordinate system coincident with the x y and z axes
 	// and located along the positive z axis, looking down the negative z axis.
 	glm::mat4 view = glm::mat4{
@@ -388,7 +388,7 @@ void objectCreatePipeline() {
 		glm::vec4{ 0.f,  0.25f,  2.f,  1.f},
 	};
 	pushConstants.view = glm::inverse( view );
-	
+
 	// Create a projection matrix compatible with Vulkan.
 	// The resulting matrix takes care of the y-z flip.
 	pushConstants.proj = vklCreatePerspectiveProjectionMatrix(glm::pi<float>() / 3.0f, 1.0f, 1.0f, 3.0f );
@@ -401,9 +401,9 @@ void objectCreatePipeline() {
 		config.enableAlphaBlending = false;
 		// path to shaders may need to be modified depending on the location
 		// of the executable
-		config.vertexShaderPath = "../HW2/src/starter.vert";
-		config.fragmentShaderPath = "../HW2/src/starter.frag";
-		
+		config.vertexShaderPath = "../../HW2/src/starter.vert";
+		config.fragmentShaderPath = "../../HW2/src/starter.frag";
+
 		// Can set polygonDrawMode to VK_POLYGON_MODE_LINE for wireframe rendering
 		config.polygonDrawMode = VK_POLYGON_MODE_FILL;
 		config.triangleCullingMode = VK_CULL_MODE_BACK_BIT;
@@ -433,14 +433,14 @@ void objectCreatePipeline() {
 			.format = VK_FORMAT_R32G32B32_SFLOAT,
 			.offset = offsetof(Vertex, normal),
 		});
-            
+
 		// Push constants should be available in both the vertex and fragment shaders
 		config.pushConstantRanges.emplace_back(VkPushConstantRange{
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT,
 			.offset = 0,
 			.size = sizeof(ObjectPushConstants),
 		});
-	pipeline = vklCreateGraphicsPipeline( config );		
+	pipeline = vklCreateGraphicsPipeline( config );
 }
 
 // Function to update push constants.
