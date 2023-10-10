@@ -125,7 +125,7 @@ float angle = 0.0f;
 /* ------------------------------------------------ */
 // Main
 /* ------------------------------------------------ */
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
 	VKL_LOG(":::::: WELCOME TO VULKAN LAUNCHPAD ::::::");
 
@@ -373,7 +373,7 @@ int main(int argc, char** argv)
 
 
 	// Now create initial geometry and pass it to the GPU
-	objectCreateGeometryAndBuffers();
+	objectCreateGeometryAndBuffers(argv[1]);
 
 	/* --------------------------------------------- */
 	// Task 1.9:  Implement the Render Loop

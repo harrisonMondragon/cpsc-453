@@ -2,8 +2,9 @@
  * Copyright 2023 University of Calgary, Visualization and Graphics Grpup
  */
 #include <vulkan/vulkan.h>
+#include <string>
 
-void objectCreateGeometryAndBuffers();
+void objectCreateGeometryAndBuffers(std::string objPath);
 void objectDestroyBuffers();
 void objectDraw();
 
