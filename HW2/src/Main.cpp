@@ -373,7 +373,7 @@ int main(int argc, char* argv[])
 
 
 	// Now create initial geometry and pass it to the GPU
-	objectCreateGeometryAndBuffers(argv[1]);
+	objectCreateGeometryAndBuffers(argv[1], window);
 
 	/* --------------------------------------------- */
 	// Task 1.9:  Implement the Render Loop

@@ -2,6 +2,7 @@
  * Copyright 2023 University of Calgary, Visualization and Graphics Group
  */
 
+#include "Camera.h"
 #include "Object.h"
 #include <VulkanLaunchpad.h>
 #include <vulkan/vulkan.hpp>
@@ -14,6 +15,7 @@
 uint32_t mNumObjectIndices;
 VkBuffer mObjectVertexData;
 VkBuffer mObjectIndices;
+VklCameraHandle mCameraHandle;
 
 // A pipeline that can be used for HW2
 VkPipeline pipeline;
@@ -39,12 +41,15 @@ ObjectPushConstants pushConstants;
 extern float angle;
 
 // Organize geometry data and send it to the GPU
-void objectCreateGeometryAndBuffers(std::string objPath)
+void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 {
 	VKL_LOG("Your command line arg was [" << objPath << "]...");
-	// TODO: After camera is working, use this to read in obj files
+	// TODO: Use this to read in obj files
 	// Load geometry from file specified via command line
 	// VklGeometryData modelGeometry = vklLoadModelGeometry(objPath);
+
+	// Create a camera object for the window size
+	mCameraHandle = vklCreateCamera(window);
 
 	// Icosahedron positions
 	std::vector<glm::vec3> positions = {
@@ -249,5 +254,14 @@ void objectCreatePipeline() {
 // Function to update push constants.
 // For the starter example, only the model matrix is updated.
 void objectUpdateConstants() {
+
+	// Update camera with current mouse input
+	// Works because glfwPollEvents is called in render loop in main
+	vklUpdateCamera(mCameraHandle);
+
+	// Update projection and view matrix using camera
+	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
+	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
+
 	pushConstants.model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f) );
 }

@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <string>
 
-void objectCreateGeometryAndBuffers(std::string objPath);
+void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window);
 void objectDestroyBuffers();
 void objectDraw();
 
