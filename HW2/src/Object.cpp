@@ -251,8 +251,8 @@ void objectCreatePipeline() {
 	pipeline = vklCreateGraphicsPipeline( config );
 }
 
-// Function to update push constants.
-// For the starter example, only the model matrix is updated.
+// Function to update push constants
+// Left click for rotate, right click for pan, scroll to zoom
 void objectUpdateConstants() {
 
 	// Update camera with current mouse input
@@ -263,5 +263,6 @@ void objectUpdateConstants() {
 	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
 	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
 
+	// From the starter example, only the model matrix is updated.
 	pushConstants.model = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f) );
 }
