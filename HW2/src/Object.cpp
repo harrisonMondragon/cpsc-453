@@ -37,7 +37,8 @@ struct ObjectPushConstants {
 // MVP matrices that are updated interactively
 ObjectPushConstants pushConstants;
 
-// Simple interactive rotation of object controlled by an angle
+// Model transformations
+extern float scale;
 extern float roll;
 extern float pitch;
 extern float yaw;
@@ -419,10 +420,19 @@ void objectUpdateConstants() {
 	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
 	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
 
+	// Scale model transformations
+	// glm::mat4 scale_matrix = glm::mat4(	scale,0.0f,0.0f,0.0f,
+	// 									0.0f,scale,0.0f,0.0f,
+	// 									0.0f,0.0f,scale,0.0f,
+	// 									0.0f,0.0f,0.0,1.0f);
+
+	glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+
 	// Roll pitch and yaw model transformations
 	glm::mat4 roll_matrix = glm::rotate(glm::mat4(1.0f), roll, glm::vec3(0.0f, 0.0f, 1.0f) );
 	glm::mat4 pitch_matrix = glm::rotate(glm::mat4(1.0f), pitch, glm::vec3(1.0f, 0.0f, 0.0f) );
 	glm::mat4 yaw_matrix = glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0.0f, 1.0f, 0.0f) );
+	glm::mat4 intrinsic_matrix = roll_matrix * pitch_matrix * yaw_matrix;
 
-	pushConstants.model = roll_matrix * pitch_matrix * yaw_matrix;
+	pushConstants.model = scale_matrix * intrinsic_matrix;
 }

@@ -120,6 +120,7 @@ static std::vector<char const*> FilterSupportedLayers(std::vector<char const*> c
 
 
 // variables that are modified via keyboard controls
+float scale = 1.0f;
 float roll = 0.0f;
 float pitch = 0.0f;
 float yaw = 0.0f;
@@ -421,6 +422,14 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 	}
 	if (action == GLFW_RELEASE) {
 		g_isGlfwKeyDown[key] = false;
+	}
+
+	// Scale commands are [enter] for bigger and [backspace] for smaller
+	if( key == GLFW_KEY_ENTER && action == GLFW_REPEAT ) {
+		scale += 0.01f;
+	}
+	if( key == GLFW_KEY_BACKSPACE && action == GLFW_REPEAT ) {
+		scale -= 0.01f;
 	}
 
 	// Roll commands are [left] for counter clockwise and [right] for clockwise
