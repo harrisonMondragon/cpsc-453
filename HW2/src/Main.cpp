@@ -120,7 +120,9 @@ static std::vector<char const*> FilterSupportedLayers(std::vector<char const*> c
 
 
 // variables that are modified via keyboard controls
-float angle = 0.0f;
+float roll = 0.0f;
+float pitch = 0.0f;
+float yaw = 0.0f;
 
 /* ------------------------------------------------ */
 // Main
@@ -417,17 +419,32 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 	if (action == GLFW_PRESS) {
 		g_isGlfwKeyDown[key] = true;
 	}
-
 	if (action == GLFW_RELEASE) {
 		g_isGlfwKeyDown[key] = false;
 	}
 
+	// Roll commands are [left] for counter clockwise and [right] for clockwise
+	if( key == GLFW_KEY_LEFT && action == GLFW_REPEAT ) {
+		roll += 0.1f;
+	}
 	if( key == GLFW_KEY_RIGHT && action == GLFW_REPEAT ) {
-		angle += 0.1f;
+		roll -= 0.1f;
 	}
 
-	if( key == GLFW_KEY_LEFT && action == GLFW_REPEAT ) {
-		angle -= 0.1f;
+	// Pitch commands are [up] for up and [down] for down
+	if( key == GLFW_KEY_DOWN && action == GLFW_REPEAT ) {
+		pitch += 0.1f;
+	}
+	if( key == GLFW_KEY_UP && action == GLFW_REPEAT ) {
+		pitch -= 0.1f;
+	}
+
+	// Yaw commands are [,] for left and [.] for right
+	if( key == GLFW_KEY_COMMA && action == GLFW_REPEAT ) {
+		yaw -= 0.1f;
+	}
+	if( key == GLFW_KEY_PERIOD && action == GLFW_REPEAT ) {
+		yaw += 0.1f;
 	}
 
 	// We mark the window that it should close if ESC is pressed:
