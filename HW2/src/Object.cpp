@@ -57,11 +57,46 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0, 1.0);
 
+	// Set up variables for bounding box
+	float max_x =  modelGeometry.positions[0][0];
+	float max_y =  modelGeometry.positions[0][1];
+	float max_z =  modelGeometry.positions[0][2];
+
+	float min_x =  modelGeometry.positions[0][0];
+	float min_y =  modelGeometry.positions[0][1];
+	float min_z =  modelGeometry.positions[0][2];
+
+	float centroid_x =  modelGeometry.positions[0][0];
+	float centroid_y =  modelGeometry.positions[0][1];
+	float centroid_z =  modelGeometry.positions[0][2];
+
 	// Create a vector to interleave and pack all vertex data into one vector.
 	std::vector<Vertex> vData( modelGeometry.positions.size() );
 	for( unsigned int i = 0; i < vData.size(); i++ ) {
 		vData[i].position = modelGeometry.positions[i];
 		vData[i].normal = glm::vec3( dis(gen), dis(gen), dis(gen) );
+
+		// Get max coordinates
+		if(vData[i].position[0] > max_x){
+			min_x = vData[i].position[0];
+		}
+		if(vData[i].position[1] > max_y){
+			min_x = vData[i].position[1];
+		}
+		if(vData[i].position[2] > max_z){
+			min_x = vData[i].position[2];
+		}
+
+		// Get min coordinates
+		if(vData[i].position[0] < min_x){
+			min_x = vData[i].position[0];
+		}
+		if(vData[i].position[1] < min_y){
+			min_y = vData[i].position[1];
+		}
+		if(vData[i].position[2] < min_z){
+			min_z = vData[i].position[2];
+		}
 	}
 
 	mNumObjectIndices = static_cast<uint32_t>(modelGeometry.indices.size());
@@ -185,7 +220,7 @@ void objectCreatePipeline() {
 			.inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
 		});
 
-		// Positions at locaion 0
+		// Positions at location 0
 		config.inputAttributeDescriptions.emplace_back(VkVertexInputAttributeDescription{
 			//.location = static_cast<uint32_t>(config.inputAttributeDescriptions.size()),
 			.location = 0,
