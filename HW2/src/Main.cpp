@@ -121,9 +121,9 @@ static std::vector<char const*> FilterSupportedLayers(std::vector<char const*> c
 
 // variables that are modified via keyboard controls
 float scale = 1.0f;
-float roll = 0.0f;
-float pitch = 0.0f;
-float yaw = 0.0f;
+float extrinsic_x = 0.0f;
+float extrinsic_y = 0.0f;
+float extrinsic_z = 0.0f;
 
 /* ------------------------------------------------ */
 // Main
@@ -432,28 +432,28 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 		scale -= 0.01f;
 	}
 
-	// Roll commands are [left] for counter clockwise and [right] for clockwise
-	if( key == GLFW_KEY_LEFT && action == GLFW_REPEAT ) {
-		roll += 0.1f;
+	// Extrinsic x commands are [Q] and [W]
+	if( key == GLFW_KEY_Q && action == GLFW_REPEAT ) {
+		extrinsic_x += 0.1f;
 	}
-	if( key == GLFW_KEY_RIGHT && action == GLFW_REPEAT ) {
-		roll -= 0.1f;
-	}
-
-	// Pitch commands are [up] for up and [down] for down
-	if( key == GLFW_KEY_DOWN && action == GLFW_REPEAT ) {
-		pitch += 0.1f;
-	}
-	if( key == GLFW_KEY_UP && action == GLFW_REPEAT ) {
-		pitch -= 0.1f;
+	if( key == GLFW_KEY_W && action == GLFW_REPEAT ) {
+		extrinsic_x -= 0.1f;
 	}
 
-	// Yaw commands are [,] for left and [.] for right
-	if( key == GLFW_KEY_COMMA && action == GLFW_REPEAT ) {
-		yaw -= 0.1f;
+	// Extrinsic y commands are [A] and [S]
+	if( key == GLFW_KEY_A && action == GLFW_REPEAT ) {
+		extrinsic_y -= 0.1f;
 	}
-	if( key == GLFW_KEY_PERIOD && action == GLFW_REPEAT ) {
-		yaw += 0.1f;
+	if( key == GLFW_KEY_S && action == GLFW_REPEAT ) {
+		extrinsic_y += 0.1f;
+	}
+
+	// Extrinsic z commands are [Z] and [X]
+	if( key == GLFW_KEY_Z && action == GLFW_REPEAT ) {
+		extrinsic_z += 0.1f;
+	}
+	if( key == GLFW_KEY_X && action == GLFW_REPEAT ) {
+		extrinsic_z -= 0.1f;
 	}
 
 	// We mark the window that it should close if ESC is pressed:

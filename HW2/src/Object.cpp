@@ -17,6 +17,11 @@ VkBuffer mObjectVertexData;
 VkBuffer mObjectIndices;
 VklCameraHandle mCameraHandle;
 
+// Variables for bounding box
+float max_x, max_y, max_z;
+float min_x, min_y, min_z;
+float centroid_x, centroid_y, centroid_z;
+
 // A pipeline that can be used for HW2
 VkPipeline pipeline;
 
@@ -39,9 +44,9 @@ ObjectPushConstants pushConstants;
 
 // Model transformations
 extern float scale;
-extern float roll;
-extern float pitch;
-extern float yaw;
+extern float extrinsic_x;
+extern float extrinsic_y;
+extern float extrinsic_z;
 
 // Organize geometry data and send it to the GPU
 void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
@@ -58,17 +63,17 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
     std::uniform_real_distribution<> dis(0.0, 1.0);
 
 	// Set up variables for bounding box
-	float max_x =  modelGeometry.positions[0][0];
-	float max_y =  modelGeometry.positions[0][1];
-	float max_z =  modelGeometry.positions[0][2];
+	max_x =  modelGeometry.positions[0].x;
+	max_y =  modelGeometry.positions[0].y;
+	max_z =  modelGeometry.positions[0].z;
 
-	float min_x =  modelGeometry.positions[0][0];
-	float min_y =  modelGeometry.positions[0][1];
-	float min_z =  modelGeometry.positions[0][2];
+	min_x =  modelGeometry.positions[0].x;
+	min_y =  modelGeometry.positions[0].y;
+	min_z =  modelGeometry.positions[0].z;
 
-	float centroid_x =  modelGeometry.positions[0][0];
-	float centroid_y =  modelGeometry.positions[0][1];
-	float centroid_z =  modelGeometry.positions[0][2];
+	float total_x = 0;
+	float total_y = 0;
+	float total_z = 0;
 
 	// Create a vector to interleave and pack all vertex data into one vector.
 	std::vector<Vertex> vData( modelGeometry.positions.size() );
@@ -78,26 +83,36 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 
 		// Get max coordinates
 		if(vData[i].position[0] > max_x){
-			min_x = vData[i].position[0];
+			max_x = vData[i].position.x;
 		}
 		if(vData[i].position[1] > max_y){
-			min_x = vData[i].position[1];
+			max_y = vData[i].position.y;
 		}
 		if(vData[i].position[2] > max_z){
-			min_x = vData[i].position[2];
+			max_z = vData[i].position.z;
 		}
 
 		// Get min coordinates
 		if(vData[i].position[0] < min_x){
-			min_x = vData[i].position[0];
+			min_x = vData[i].position.x;
 		}
 		if(vData[i].position[1] < min_y){
-			min_y = vData[i].position[1];
+			min_y = vData[i].position.y;
 		}
 		if(vData[i].position[2] < min_z){
-			min_z = vData[i].position[2];
+			min_z = vData[i].position.z;
 		}
+
+		// Add to totals
+		total_x +=  vData[i].position.x;
+		total_y +=  vData[i].position.y;
+		total_z +=  vData[i].position.z;
 	}
+
+	// Calculate centroids
+	centroid_x = total_x / modelGeometry.positions.size();
+	centroid_y = total_y / modelGeometry.positions.size();
+	centroid_z = total_z / modelGeometry.positions.size();
 
 	mNumObjectIndices = static_cast<uint32_t>(modelGeometry.indices.size());
 	const auto device = vklGetDevice();
@@ -252,21 +267,26 @@ void objectCreatePipeline() {
 void objectUpdateConstants() {
 
 	// Update camera with current mouse input
-	// Works because glfwPollEvents is called in render loop in main
 	vklUpdateCamera(mCameraHandle);
 
-	// Update projection and view matrix using camera
+	// Update view matrix using camera, also center the model in the bounding box
 	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
+
+	//TODO: Fix scale so it is proportional to the model
+	pushConstants.view = glm::scale(pushConstants.view, glm::vec3(0.1f));
+	pushConstants.view = glm::translate(pushConstants.view, glm::vec3(-centroid_x,-centroid_y,-centroid_z));
+
+	// Update projection matrix using camera
 	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
 
 	// Scale model transformations
 	glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
 
-	// Roll pitch and yaw model transformations
-	glm::mat4 roll_matrix = glm::rotate(glm::mat4(1.0f), roll, glm::vec3(0.0f, 0.0f, 1.0f) );
-	glm::mat4 pitch_matrix = glm::rotate(glm::mat4(1.0f), pitch, glm::vec3(1.0f, 0.0f, 0.0f) );
-	glm::mat4 yaw_matrix = glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0.0f, 1.0f, 0.0f) );
-	glm::mat4 intrinsic_matrix = roll_matrix * pitch_matrix * yaw_matrix;
+	// Extrinsic rotation model transformations
+	glm::mat4 extrinsic_x_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 extrinsic_y_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 extrinsic_z_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 extrinsic_matrix = extrinsic_x_matrix * extrinsic_y_matrix * extrinsic_z_matrix;
 
-	pushConstants.model = scale_matrix * intrinsic_matrix;
+	pushConstants.model = scale_matrix * extrinsic_matrix;
 }
