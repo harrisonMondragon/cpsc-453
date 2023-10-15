@@ -47,6 +47,9 @@ extern float scale;
 extern float extrinsic_x;
 extern float extrinsic_y;
 extern float extrinsic_z;
+extern float intrinsic_x;
+extern float intrinsic_y;
+extern float intrinsic_z;
 
 // Organize geometry data and send it to the GPU
 void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
@@ -282,11 +285,19 @@ void objectUpdateConstants() {
 	// Scale model transformations
 	glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
 
-	// Extrinsic rotation model transformations
+	// Extrinsic rotation model transformations (rotate around global axes)
 	glm::mat4 extrinsic_x_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 extrinsic_y_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 extrinsic_z_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 extrinsic_matrix = extrinsic_x_matrix * extrinsic_y_matrix * extrinsic_z_matrix;
 
-	pushConstants.model = scale_matrix * extrinsic_matrix;
+	// Intrinsic rotation model transformations (rotate around model axes)
+	// This is done by translating the model to the global origin, doing the rotation, then translating back
+	glm::mat4 intrinsic_trans = glm::translate(glm::mat4(1.0f), glm::vec3(centroid_x,centroid_y,centroid_z));
+	glm::mat4 intrinsic_x_rot = glm::rotate(glm::mat4(1.0f), intrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 intrinsic_y_rot = glm::rotate(glm::mat4(1.0f), intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 intrinsic_z_rot = glm::rotate(glm::mat4(1.0f), intrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 intrinsic_matrix = intrinsic_trans * intrinsic_x_rot * intrinsic_y_rot * intrinsic_z_rot * glm::inverse(intrinsic_trans);
+
+	pushConstants.model = scale_matrix * extrinsic_matrix * intrinsic_matrix;
 }

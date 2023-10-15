@@ -124,6 +124,10 @@ float scale = 1.0f;
 float extrinsic_x = 0.0f;
 float extrinsic_y = 0.0f;
 float extrinsic_z = 0.0f;
+float intrinsic_x = 0.0f;
+float intrinsic_y = 0.0f;
+float intrinsic_z = 0.0f;
+
 
 /* ------------------------------------------------ */
 // Main
@@ -439,7 +443,6 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 	if( key == GLFW_KEY_W && action == GLFW_REPEAT ) {
 		extrinsic_x -= 0.1f;
 	}
-
 	// Extrinsic y commands are [A] and [S]
 	if( key == GLFW_KEY_A && action == GLFW_REPEAT ) {
 		extrinsic_y -= 0.1f;
@@ -447,13 +450,34 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 	if( key == GLFW_KEY_S && action == GLFW_REPEAT ) {
 		extrinsic_y += 0.1f;
 	}
-
 	// Extrinsic z commands are [Z] and [X]
 	if( key == GLFW_KEY_Z && action == GLFW_REPEAT ) {
 		extrinsic_z += 0.1f;
 	}
 	if( key == GLFW_KEY_X && action == GLFW_REPEAT ) {
 		extrinsic_z -= 0.1f;
+	}
+
+	// Intrinsic x commands are [O] and [P]
+	if( key == GLFW_KEY_O && action == GLFW_REPEAT ) {
+		intrinsic_x += 0.1f;
+	}
+	if( key == GLFW_KEY_P && action == GLFW_REPEAT ) {
+		intrinsic_x -= 0.1f;
+	}
+	// Extrinsic y commands are [K] and [L]
+	if( key == GLFW_KEY_K && action == GLFW_REPEAT ) {
+		intrinsic_y -= 0.1f;
+	}
+	if( key == GLFW_KEY_L && action == GLFW_REPEAT ) {
+		intrinsic_y += 0.1f;
+	}
+	// Extrinsic z commands are [N] and [M]
+	if( key == GLFW_KEY_N && action == GLFW_REPEAT ) {
+		intrinsic_z += 0.1f;
+	}
+	if( key == GLFW_KEY_M && action == GLFW_REPEAT ) {
+		intrinsic_z -= 0.1f;
 	}
 
 	// We mark the window that it should close if ESC is pressed:
