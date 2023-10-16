@@ -78,11 +78,24 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 	float total_y = 0;
 	float total_z = 0;
 
+	// Create a vector to hold all face normals
+	std::vector<glm::vec3> faceNormals(modelGeometry.indices.size()/3);
+	for( unsigned int i = 0; i < faceNormals.size(); i ++) {
+		glm::vec3 triA = modelGeometry.positions[modelGeometry.indices[3*i]];
+		glm::vec3 triB = modelGeometry.positions[modelGeometry.indices[3*i+1]];
+		glm::vec3 triC = modelGeometry.positions[modelGeometry.indices[3*i+2]];
+
+		glm::vec3 triAB = triB - triA;
+		glm::vec3 triAC = triC - triA;
+
+		faceNormals[i] = glm::cross(triAB, triAC);
+	}
+
 	// Create a vector to interleave and pack all vertex data into one vector.
 	std::vector<Vertex> vData( modelGeometry.positions.size() );
-	for( unsigned int i = 0; i < vData.size(); i++ ) {
+	for(unsigned int i = 0; i < vData.size(); i++ ) {
+		// Position stuff
 		vData[i].position = modelGeometry.positions[i];
-		vData[i].normal = glm::vec3( dis(gen), dis(gen), dis(gen) );
 
 		// Get max coordinates
 		if(vData[i].position[0] > max_x){
@@ -110,6 +123,18 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 		total_x +=  vData[i].position.x;
 		total_y +=  vData[i].position.y;
 		total_z +=  vData[i].position.z;
+
+		// Normal Stuff
+		glm::vec3 sumVertexNormal = glm::vec3(0.0f);
+		int faceCounter = 0;
+		for(unsigned int j = 0; j < modelGeometry.indices.size(); j ++) {
+			if(modelGeometry.indices[j] == i){
+				sumVertexNormal += faceNormals[j/3];
+				faceCounter++;
+			}
+		}
+		glm::vec3 fullLengthNormal = glm::vec3(sumVertexNormal.x/faceCounter, sumVertexNormal.y/faceCounter, sumVertexNormal.z/faceCounter);
+		vData[i].normal = glm::normalize(fullLengthNormal);
 	}
 
 	// Calculate centroids
@@ -275,11 +300,16 @@ void objectUpdateConstants() {
 	// Update view matrix using camera, also center the model in the bounding box
 	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
 
-	//TODO: Fix scale so it is proportional to the model
+	// TODO: Ask TA how to fix scale so it is proportional to the model
+	// pushConstants.view = glm::scale(pushConstants.view, glm::vec3(0.1f));
+	// or
+	// pushConstants.view = glm::translate(pushConstants.view, glm::vec3(-centroid_x,-centroid_y,-10.f * centroid_z));
+
 	pushConstants.view = glm::scale(pushConstants.view, glm::vec3(0.1f));
 	pushConstants.view = glm::translate(pushConstants.view, glm::vec3(-centroid_x,-centroid_y,-centroid_z));
 
 	// Update projection matrix using camera
+
 	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
 
 	// Scale model transformations
@@ -293,6 +323,10 @@ void objectUpdateConstants() {
 
 	// Intrinsic rotation model transformations (rotate around model axes)
 	// This is done by translating the model to the global origin, doing the rotation, then translating back
+
+	// TODO: Ask TA if this is correct, because rn the coordinate plane will be skewed if 2 extrinsic rotations are applied
+	// before an intrinsic rotation
+
 	glm::mat4 intrinsic_trans = glm::translate(glm::mat4(1.0f), glm::vec3(centroid_x,centroid_y,centroid_z));
 	glm::mat4 intrinsic_x_rot = glm::rotate(glm::mat4(1.0f), intrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 intrinsic_y_rot = glm::rotate(glm::mat4(1.0f), intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
