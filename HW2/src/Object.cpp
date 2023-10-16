@@ -224,7 +224,7 @@ uint32_t objectGetNumIndices() {
 void objectCreatePipeline() {
 
 	// initialize push constants
-	pushConstants.model = glm::mat4{ 1.0f };
+	pushConstants.model = glm::translate(glm::mat4(1.0f), glm::vec3(-centroid_x,-centroid_y,-centroid_z));
 
 	// a right-handed view coordinate system coincident with the x y and z axes
 	// and located along the positive z axis, looking down the negative z axis.
@@ -248,8 +248,8 @@ void objectCreatePipeline() {
 		config.enableAlphaBlending = false;
 		// path to shaders may need to be modified depending on the location
 		// of the executable
-		config.vertexShaderPath = "../../HW2/src/starter.vert";
-		config.fragmentShaderPath = "../../HW2/src/starter.frag";
+		config.vertexShaderPath = "../HW2/src/starter.vert";
+		config.fragmentShaderPath = "../HW2/src/starter.frag";
 
 		// Can set polygonDrawMode to VK_POLYGON_MODE_LINE for wireframe rendering
 		config.polygonDrawMode = VK_POLYGON_MODE_FILL;
@@ -299,17 +299,6 @@ void objectUpdateConstants() {
 
 	// Update view matrix using camera, also center the model in the bounding box
 	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
-
-	// TODO: Ask TA how to fix scale so it is proportional to the model
-	// pushConstants.view = glm::scale(pushConstants.view, glm::vec3(0.1f));
-	// or
-	// pushConstants.view = glm::translate(pushConstants.view, glm::vec3(-centroid_x,-centroid_y,-10.f * centroid_z));
-
-	pushConstants.view = glm::scale(pushConstants.view, glm::vec3(0.1f));
-	pushConstants.view = glm::translate(pushConstants.view, glm::vec3(-centroid_x,-centroid_y,-centroid_z));
-
-	// Update projection matrix using camera
-
 	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
 
 	// Scale model transformations
@@ -327,11 +316,16 @@ void objectUpdateConstants() {
 	// TODO: Ask TA if this is correct, because rn the coordinate plane will be skewed if 2 extrinsic rotations are applied
 	// before an intrinsic rotation
 
-	glm::mat4 intrinsic_trans = glm::translate(glm::mat4(1.0f), glm::vec3(centroid_x,centroid_y,centroid_z));
-	glm::mat4 intrinsic_x_rot = glm::rotate(glm::mat4(1.0f), intrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
-	glm::mat4 intrinsic_y_rot = glm::rotate(glm::mat4(1.0f), intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 intrinsic_z_rot = glm::rotate(glm::mat4(1.0f), intrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 intrinsic_matrix = intrinsic_trans * intrinsic_x_rot * intrinsic_y_rot * intrinsic_z_rot * glm::inverse(intrinsic_trans);
+	// This is not correct because it infinatelty updates the model matrix
+	// Try having a separate function that works off key input
+	// glm::mat4 intrinsic_x_rot = glm::rotate(pushConstants.model, intrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
+	// glm::mat4 intrinsic_y_rot = glm::rotate(pushConstants.model, intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
+	// glm::mat4 intrinsic_z_rot = glm::rotate(pushConstants.model, intrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
+	// glm::mat4 intrinsic_matrix = intrinsic_x_rot * intrinsic_y_rot * intrinsic_z_rot;
 
-	pushConstants.model = scale_matrix * extrinsic_matrix * intrinsic_matrix;
+	pushConstants.model = pushConstants.model * scale_matrix * extrinsic_matrix;
+
+	extrinsic_x = 0.0;
+	extrinsic_y = 0.0;
+	extrinsic_z = 0.0;
 }
