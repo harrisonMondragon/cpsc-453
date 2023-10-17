@@ -137,8 +137,7 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 				faceCounter++;
 			}
 		}
-		glm::vec3 fullLengthNormal = glm::vec3(sumVertexNormal.x/faceCounter, sumVertexNormal.y/faceCounter, sumVertexNormal.z/faceCounter);
-		vData[i].normal = glm::normalize(fullLengthNormal);
+		vData[i].normal = glm::vec3(sumVertexNormal.x/faceCounter, sumVertexNormal.y/faceCounter, sumVertexNormal.z/faceCounter);
 	}
 
 	// Calculate centroids
@@ -331,4 +330,8 @@ void objectUpdateConstants() {
 	glm::mat4 intrinsic_y_rot = glm::rotate(intrinsic_x_rot, intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 intrinsic_z_rot = glm::rotate(intrinsic_y_rot, intrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
 	pushConstants.model = intrinsic_z_rot;
+
+	// intrinsic_x = 0;
+	// intrinsic_y = 0;
+	// intrinsic_z = 0;
 }

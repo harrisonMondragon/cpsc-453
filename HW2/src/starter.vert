@@ -3,7 +3,11 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 inNormal;
 
-layout(location=0) out vec3 outNormal;
+layout(location = 0) out vec3 outNormal;
+layout(location = 1) out vec3 fragPos;
+
+// layout(location = X) out vec3 viewDir;
+// layout(location = X) out vec3 lightDir;
 
 //push constants block
 layout( push_constant ) uniform constants
@@ -14,7 +18,8 @@ layout( push_constant ) uniform constants
 } PushConstants;
 
 void main() {
-    outNormal = inNormal;
+    outNormal = mat3(transpose(inverse(PushConstants.model))) * inNormal;
+    fragPos = vec3(PushConstants.model * vec4(position, 1.0));
 
     gl_Position = PushConstants.proj *
     PushConstants.view *
