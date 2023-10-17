@@ -22,6 +22,10 @@ float max_x, max_y, max_z;
 float min_x, min_y, min_z;
 float centroid_x, centroid_y, centroid_z;
 
+
+// NEED THIS GUY
+glm::mat4 ahh_matrix;
+
 // A pipeline that can be used for HW2
 VkPipeline pipeline;
 
@@ -224,7 +228,9 @@ uint32_t objectGetNumIndices() {
 void objectCreatePipeline() {
 
 	// initialize push constants
-	pushConstants.model = glm::translate(glm::mat4(1.0f), glm::vec3(-centroid_x,-centroid_y,-centroid_z));
+	pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+	pushConstants.model = glm::translate(pushConstants.model, glm::vec3(-centroid_x,-centroid_y,-centroid_z));
+	ahh_matrix = pushConstants.model;
 
 	// a right-handed view coordinate system coincident with the x y and z axes
 	// and located along the positive z axis, looking down the negative z axis.
@@ -248,8 +254,8 @@ void objectCreatePipeline() {
 		config.enableAlphaBlending = false;
 		// path to shaders may need to be modified depending on the location
 		// of the executable
-		config.vertexShaderPath = "../HW2/src/starter.vert";
-		config.fragmentShaderPath = "../HW2/src/starter.frag";
+		config.vertexShaderPath = "../../HW2/src/starter.vert";
+		config.fragmentShaderPath = "../../HW2/src/starter.frag";
 
 		// Can set polygonDrawMode to VK_POLYGON_MODE_LINE for wireframe rendering
 		config.polygonDrawMode = VK_POLYGON_MODE_FILL;
@@ -301,31 +307,28 @@ void objectUpdateConstants() {
 	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
 	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
 
-	// Scale model transformations
+
+
+
+
+
+
+	// AAAAAHHHHHHHHHH THIS IS ALMOST RIGHT
+	// Scale model transformation
 	glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
 
 	// Extrinsic rotation model transformations (rotate around global axes)
 	glm::mat4 extrinsic_x_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 extrinsic_y_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 extrinsic_z_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 extrinsic_matrix = extrinsic_x_matrix * extrinsic_y_matrix * extrinsic_z_matrix;
+	glm::mat4 extrinsic_matrix = ahh_matrix * extrinsic_x_matrix * extrinsic_y_matrix * extrinsic_z_matrix;
 
-	// Intrinsic rotation model transformations (rotate around model axes)
-	// This is done by translating the model to the global origin, doing the rotation, then translating back
-
-	// TODO: Ask TA if this is correct, because rn the coordinate plane will be skewed if 2 extrinsic rotations are applied
-	// before an intrinsic rotation
+	pushConstants.model = scale_matrix * extrinsic_matrix;
 
 	// This is not correct because it infinatelty updates the model matrix
 	// Try having a separate function that works off key input
-	// glm::mat4 intrinsic_x_rot = glm::rotate(pushConstants.model, intrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
-	// glm::mat4 intrinsic_y_rot = glm::rotate(pushConstants.model, intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
-	// glm::mat4 intrinsic_z_rot = glm::rotate(pushConstants.model, intrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
-	// glm::mat4 intrinsic_matrix = intrinsic_x_rot * intrinsic_y_rot * intrinsic_z_rot;
-
-	pushConstants.model = pushConstants.model * scale_matrix * extrinsic_matrix;
-
-	extrinsic_x = 0.0;
-	extrinsic_y = 0.0;
-	extrinsic_z = 0.0;
+	glm::mat4 intrinsic_x_rot = glm::rotate(pushConstants.model, intrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 intrinsic_y_rot = glm::rotate(intrinsic_x_rot, intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 intrinsic_z_rot = glm::rotate(intrinsic_y_rot, intrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
+	pushConstants.model = intrinsic_z_rot;
 }
