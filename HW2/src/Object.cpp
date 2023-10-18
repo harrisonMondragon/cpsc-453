@@ -114,7 +114,7 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 		glm::vec3 triB = modelGeometry.positions[modelGeometry.indices[i+1]];
 		glm::vec3 triC = modelGeometry.positions[modelGeometry.indices[i+2]];
 
-		glm::vec3 faceNormal = glm::cross(triB - triA, triC - triA);
+		glm::vec3 faceNormal = glm::normalize(glm::cross(triB - triA, triC - triB));
 
 		vData[modelGeometry.indices[i]].normal += faceNormal;
 		vData[modelGeometry.indices[i+1]].normal += faceNormal;
@@ -164,6 +164,7 @@ void objectDestroyBuffers() {
 	vklDestroyGraphicsPipeline(pipeline);
 	vklDestroyHostCoherentBufferAndItsBackingMemory( mObjectVertexData );
 	vklDestroyHostCoherentBufferAndItsBackingMemory( mObjectIndices );
+	vklDestroyCamera(mCameraHandle);
 }
 
 void objectDraw() {
@@ -229,8 +230,8 @@ void objectCreatePipeline() {
 		config.enableAlphaBlending = false;
 		// path to shaders may need to be modified depending on the location
 		// of the executable
-		config.vertexShaderPath = "../../HW2/src/starter.vert";
-		config.fragmentShaderPath = "../../HW2/src/starter.frag";
+		config.vertexShaderPath = "../HW2/src/starter.vert";
+		config.fragmentShaderPath = "../HW2/src/starter.frag";
 
 		// Can set polygonDrawMode to VK_POLYGON_MODE_LINE for wireframe rendering
 		config.polygonDrawMode = VK_POLYGON_MODE_FILL;

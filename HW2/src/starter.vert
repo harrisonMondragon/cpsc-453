@@ -22,7 +22,8 @@ layout( push_constant ) uniform constants
 } PushConstants;
 
 void main() {
-    outNormal = mat3(transpose(inverse(PushConstants.model))) * inNormal;
+    outNormal = normalize(mat3(PushConstants.model) * inNormal);
+
     fragPos = vec3(PushConstants.model * vec4(position, 1.0));
     cameraPos = PushConstants.cameraPos;
 
