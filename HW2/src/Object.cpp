@@ -82,23 +82,10 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 	float total_y = 0;
 	float total_z = 0;
 
-	// Create a vector to hold all face normals
-	std::vector<glm::vec3> faceNormals(modelGeometry.indices.size()/3);
-	for( unsigned int i = 0; i < faceNormals.size(); i ++) {
-		glm::vec3 triA = modelGeometry.positions[modelGeometry.indices[3*i]];
-		glm::vec3 triB = modelGeometry.positions[modelGeometry.indices[3*i+1]];
-		glm::vec3 triC = modelGeometry.positions[modelGeometry.indices[3*i+2]];
-
-		glm::vec3 triAB = triB - triA;
-		glm::vec3 triAC = triC - triA;
-
-		faceNormals[i] = glm::cross(triAB, triAC);
-	}
-
 	// Create a vector to interleave and pack all vertex data into one vector.
 	std::vector<Vertex> vData( modelGeometry.positions.size() );
 	for(unsigned int i = 0; i < vData.size(); i++ ) {
-		// Position stuff
+		// Copy position
 		vData[i].position = modelGeometry.positions[i];
 
 		// Get max coordinates
@@ -128,16 +115,17 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 		total_y +=  vData[i].position.y;
 		total_z +=  vData[i].position.z;
 
-		// Normal Stuff
-		glm::vec3 sumVertexNormal = glm::vec3(0.0f);
-		int faceCounter = 0;
-		for(unsigned int j = 0; j < modelGeometry.indices.size(); j ++) {
-			if(modelGeometry.indices[j] == i){
-				sumVertexNormal += faceNormals[j/3];
-				faceCounter++;
-			}
-		}
-		vData[i].normal = glm::vec3(sumVertexNormal.x/faceCounter, sumVertexNormal.y/faceCounter, sumVertexNormal.z/faceCounter);
+		// Calculate face normals and add them to the all positions of the face
+		// These sums get normalized by the fragment shader
+		glm::vec3 triA = modelGeometry.positions[modelGeometry.indices[3*i]];
+		glm::vec3 triB = modelGeometry.positions[modelGeometry.indices[3*i+1]];
+		glm::vec3 triC = modelGeometry.positions[modelGeometry.indices[3*i+2]];
+
+		glm::vec3 faceNormal = glm::cross(triB - triA, triC - triA);
+
+		vData[modelGeometry.indices[3*i]].normal += faceNormal;
+		vData[modelGeometry.indices[3*i+1]].normal += faceNormal;
+		vData[modelGeometry.indices[3*i+2]].normal += faceNormal;
 	}
 
 	// Calculate centroids
