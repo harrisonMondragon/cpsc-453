@@ -60,11 +60,6 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 	// Create a camera object for the window size
 	mCameraHandle = vklCreateCamera(window);
 
-	// random number generator for assigning random per-vertex normal data.
-	std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0.0, 1.0);
-
 	// Set up variables for bounding box and centroid calcs
 	float max_x =  modelGeometry.positions[0].x;
 	float max_y =  modelGeometry.positions[0].y;
@@ -110,18 +105,20 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 		total_x +=  vData[i].position.x;
 		total_y +=  vData[i].position.y;
 		total_z +=  vData[i].position.z;
+	}
 
+	for(unsigned int i = 0; i < modelGeometry.indices.size(); i+=3 ) {
 		// Calculate face normals and add them to the all positions of the face
 		// These sums get normalized by the fragment shader
-		glm::vec3 triA = modelGeometry.positions[modelGeometry.indices[3*i]];
-		glm::vec3 triB = modelGeometry.positions[modelGeometry.indices[3*i+1]];
-		glm::vec3 triC = modelGeometry.positions[modelGeometry.indices[3*i+2]];
+		glm::vec3 triA = modelGeometry.positions[modelGeometry.indices[i]];
+		glm::vec3 triB = modelGeometry.positions[modelGeometry.indices[i+1]];
+		glm::vec3 triC = modelGeometry.positions[modelGeometry.indices[i+2]];
 
 		glm::vec3 faceNormal = glm::cross(triB - triA, triC - triA);
 
-		vData[modelGeometry.indices[3*i]].normal += faceNormal;
-		vData[modelGeometry.indices[3*i+1]].normal += faceNormal;
-		vData[modelGeometry.indices[3*i+2]].normal += faceNormal;
+		vData[modelGeometry.indices[i]].normal += faceNormal;
+		vData[modelGeometry.indices[i+1]].normal += faceNormal;
+		vData[modelGeometry.indices[i+2]].normal += faceNormal;
 	}
 
 	// Calculate bounding box
