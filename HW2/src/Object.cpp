@@ -18,8 +18,7 @@ VkBuffer mObjectIndices;
 VklCameraHandle mCameraHandle;
 
 // Variables for bounding box
-float max_x, max_y, max_z;
-float min_x, min_y, min_z;
+float bound_x, bound_y, bound_z;
 float centroid_x, centroid_y, centroid_z;
 
 
@@ -69,14 +68,14 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0, 1.0);
 
-	// Set up variables for bounding box
-	max_x =  modelGeometry.positions[0].x;
-	max_y =  modelGeometry.positions[0].y;
-	max_z =  modelGeometry.positions[0].z;
+	// Set up variables for bounding box and centroid calcs
+	float max_x =  modelGeometry.positions[0].x;
+	float max_y =  modelGeometry.positions[0].y;
+	float max_z =  modelGeometry.positions[0].z;
 
-	min_x =  modelGeometry.positions[0].x;
-	min_y =  modelGeometry.positions[0].y;
-	min_z =  modelGeometry.positions[0].z;
+	float min_x =  modelGeometry.positions[0].x;
+	float min_y =  modelGeometry.positions[0].y;
+	float min_z =  modelGeometry.positions[0].z;
 
 	float total_x = 0;
 	float total_y = 0;
@@ -127,6 +126,11 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 		vData[modelGeometry.indices[3*i+1]].normal += faceNormal;
 		vData[modelGeometry.indices[3*i+2]].normal += faceNormal;
 	}
+
+	// Calculate bounding box
+	bound_x = max_x - min_x;
+	bound_y = max_y - min_y;
+	bound_z = max_z - min_z;
 
 	// Calculate centroids
 	centroid_x = total_x / modelGeometry.positions.size();
@@ -214,8 +218,12 @@ uint32_t objectGetNumIndices() {
 
 void objectCreatePipeline() {
 
+	// TODO: Ask TA of this bounding box logic is good
+	float bounding_box = glm::max(bound_x, glm::max(bound_y, bound_z));
+	pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3(5.f/bounding_box));
+
 	// initialize push constants
-	pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+	// pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
 	pushConstants.model = glm::translate(pushConstants.model, glm::vec3(-centroid_x,-centroid_y,-centroid_z));
 	ahh_matrix = pushConstants.model;
 
