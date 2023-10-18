@@ -1,17 +1,20 @@
+/*
+ * This code heavily references the following tutorial:
+ * https://learnopengl.com/Lighting/Basic-Lighting
+ */
+
 #version 450
 
 layout(location = 0) out vec4 FragColor;
 
 layout(location = 0) in vec3 normal;
 layout(location = 1) in vec3 fragPos;
-
-// layout(location = X) in vec3 viewDir;
-// layout(location = X) in vec3 lightDir;
+layout(location = 2) in vec3 cameraPos;
 
 void main() {
 
 	// Constants
-	vec3 lightPos = vec3(1,1,1);	// Light position top right
+	vec3 lightPos = vec3(1,1,1);	// Light position
 	vec3 lightColor = vec3(1,1,1);	// Light color whie
 	vec3 objectColor = vec3(0,1,1);	// Object color
 
@@ -26,7 +29,16 @@ void main() {
 	float diff = max(dot(normal, lightDir), 0.0);
 	vec3 diffuse = diff * lightColor;
 
+	// Specular
+	float specularStrength = 0.5;
+	vec3 viewDir = normalize(cameraPos - fragPos);
+	vec3 reflectDir = reflect(-lightDir, norm);
+
+	float gamma = 256;
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), gamma);
+	vec3 specular = specularStrength * spec * lightColor;
+
 	// All together
-	vec3 result = (ambient + diffuse) * objectColor;
+	vec3 result = (ambient + diffuse + specular) * objectColor;
 	FragColor = vec4(result, 1.0);
 }

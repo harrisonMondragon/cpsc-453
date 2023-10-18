@@ -21,10 +21,6 @@ VklCameraHandle mCameraHandle;
 float bound_x, bound_y, bound_z;
 float centroid_x, centroid_y, centroid_z;
 
-
-// NEED THIS GUY
-glm::mat4 ahh_matrix;
-
 // A pipeline that can be used for HW2
 VkPipeline pipeline;
 
@@ -40,6 +36,7 @@ struct ObjectPushConstants {
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
+	glm::vec3 cameraPos;
 };
 
 // MVP matrices that are updated interactively
@@ -218,28 +215,14 @@ uint32_t objectGetNumIndices() {
 
 void objectCreatePipeline() {
 
-	// TODO: Ask TA of this bounding box logic is good
+	// TODO: Ask TA of this bounding box logic is good, hardcoded version is below
 	float bounding_box = glm::max(bound_x, glm::max(bound_y, bound_z));
 	pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3(5.f/bounding_box));
-
-	// initialize push constants
 	// pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+
+	// Initialize model. Do not need to initialize view and proj because they will get reset
+	// by the camera in objectUpdateConstants anyways
 	pushConstants.model = glm::translate(pushConstants.model, glm::vec3(-centroid_x,-centroid_y,-centroid_z));
-	ahh_matrix = pushConstants.model;
-
-	// a right-handed view coordinate system coincident with the x y and z axes
-	// and located along the positive z axis, looking down the negative z axis.
-	glm::mat4 view = glm::mat4{
-		glm::vec4{ 1.f,  0.f,  0.f,  0.f},
-		glm::vec4{ 0.f,  1.f,  0.f,  0.f},
-		glm::vec4{ 0.f,  0.f,  1.f,  0.f},
-		glm::vec4{ 0.f,  0.25f,  2.f,  1.f},
-	};
-	pushConstants.view = glm::inverse( view );
-
-	// Create a projection matrix compatible with Vulkan.
-	// The resulting matrix takes care of the y-z flip.
-	pushConstants.proj = vklCreatePerspectiveProjectionMatrix(glm::pi<float>() / 3.0f, 1.0f, 1.0f, 3.0f );
 
 	// ------------------------------
 	// Pipeline creation
@@ -298,9 +281,10 @@ void objectUpdateConstants() {
 	// Update camera with current mouse input
 	vklUpdateCamera(mCameraHandle);
 
-	// Update view matrix using camera, also center the model in the bounding box
+	// Update view, proj, and cameraPos
 	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
 	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
+	pushConstants.cameraPos = vklGetCameraPosition(mCameraHandle);
 
 	// Scale model transformation
 	glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
