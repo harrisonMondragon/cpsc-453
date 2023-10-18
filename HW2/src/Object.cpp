@@ -306,32 +306,29 @@ void objectUpdateConstants() {
 	pushConstants.view = vklGetCameraViewMatrix(mCameraHandle);
 	pushConstants.proj = vklGetCameraProjectionMatrix(mCameraHandle);
 
-
-
-
-
-
-
-	// AAAAAHHHHHHHHHH THIS IS ALMOST RIGHT
 	// Scale model transformation
 	glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+	pushConstants.model = pushConstants.model * scale_matrix;
 
 	// Extrinsic rotation model transformations (rotate around global axes)
 	glm::mat4 extrinsic_x_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::mat4 extrinsic_y_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 extrinsic_z_matrix = glm::rotate(glm::mat4(1.0f), extrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 extrinsic_matrix = ahh_matrix * extrinsic_x_matrix * extrinsic_y_matrix * extrinsic_z_matrix;
+	glm::mat4 extrinsic_matrix =  extrinsic_x_matrix * extrinsic_y_matrix * extrinsic_z_matrix;
+	pushConstants.model = extrinsic_matrix * pushConstants.model;
 
-	pushConstants.model = scale_matrix * extrinsic_matrix;
+	// Intrinsic rotation model transformations (rotate around object axes)
+	glm::mat4 intrinsic_x_matrix = glm::rotate(glm::mat4(1.0f), intrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 intrinsic_y_matrix = glm::rotate(glm::mat4(1.0f), intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 intrinsic_z_matrix = glm::rotate(glm::mat4(1.0f), intrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 intrinsic_matrix =  intrinsic_x_matrix * intrinsic_y_matrix * intrinsic_z_matrix;
+	pushConstants.model = pushConstants.model * intrinsic_matrix;
 
-	// This is not correct because it infinatelty updates the model matrix
-	// Try having a separate function that works off key input
-	glm::mat4 intrinsic_x_rot = glm::rotate(pushConstants.model, intrinsic_x, glm::vec3(1.0f, 0.0f, 0.0f));
-	glm::mat4 intrinsic_y_rot = glm::rotate(intrinsic_x_rot, intrinsic_y, glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 intrinsic_z_rot = glm::rotate(intrinsic_y_rot, intrinsic_z, glm::vec3(0.0f, 0.0f, 1.0f));
-	pushConstants.model = intrinsic_z_rot;
-
-	// intrinsic_x = 0;
-	// intrinsic_y = 0;
-	// intrinsic_z = 0;
+	intrinsic_x = 0;
+	intrinsic_y = 0;
+	intrinsic_z = 0;
+	extrinsic_x = 0;
+	extrinsic_y = 0;
+	extrinsic_z = 0;
+	scale = 1;
 }

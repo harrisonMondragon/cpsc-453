@@ -13,7 +13,7 @@ void main() {
 	// Constants
 	vec3 lightPos = vec3(1,1,1);	// Light position top right
 	vec3 lightColor = vec3(1,1,1);	// Light color whie
-	vec3 objectColor = vec3(1,0,0);	// Object color green
+	vec3 objectColor = vec3(0,1,1);	// Object color
 
 	// Ambient
 	float ambientStrength = 0.1;
