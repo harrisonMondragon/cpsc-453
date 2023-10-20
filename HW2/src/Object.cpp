@@ -107,9 +107,8 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 		total_z +=  vData[i].position.z;
 	}
 
+	// Calculate face normals, normalize them, and add them to the all positions of the face
 	for(unsigned int i = 0; i < modelGeometry.indices.size(); i+=3 ) {
-		// Calculate face normals and add them to the all positions of the face
-		// These sums get normalized by the fragment shader
 		glm::vec3 triA = modelGeometry.positions[modelGeometry.indices[i]];
 		glm::vec3 triB = modelGeometry.positions[modelGeometry.indices[i+1]];
 		glm::vec3 triC = modelGeometry.positions[modelGeometry.indices[i+2]];
@@ -155,7 +154,6 @@ void objectCreateGeometryAndBuffers(std::string objPath, GLFWwindow* window)
 	// Now Create the pipeline
 	objectCreatePipeline();
 }
-
 
 // Cleanup buffers and pipeline created on the GPU
 void objectDestroyBuffers() {
@@ -302,6 +300,7 @@ void objectUpdateConstants() {
 	glm::mat4 intrinsic_matrix =  intrinsic_x_matrix * intrinsic_y_matrix * intrinsic_z_matrix;
 	pushConstants.model = pushConstants.model * intrinsic_matrix;
 
+	// Reset rotation and scale values
 	intrinsic_x = 0;
 	intrinsic_y = 0;
 	intrinsic_z = 0;

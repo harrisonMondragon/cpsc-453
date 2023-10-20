@@ -15,7 +15,7 @@ void main() {
 
 	// Constants
 	vec3 lightPos = vec3(50,50,20);	// Light position
-	vec3 lightColor = vec3(1,1,1);	// Light color whie
+	vec3 lightColor = vec3(1,1,1);	// Light color white
 	vec3 objectColor = vec3(34.f/255.f,139.f/255.f,34/255.f);	// Object color
 
 	// Ambient
