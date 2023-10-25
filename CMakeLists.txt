@@ -30,28 +30,28 @@ endif()
 #=======================================#
 # VulkanLaunchpad (dependency)   #
 #=======================================#
-add_subdirectory(VulkanLaunchpad)
 
 set(PROJECT_NAME StarterDemo)
 # Working directory
 add_compile_definitions("ASSET_DIR=${CMAKE_SOURCE_DIR}/assets")
 
+### Launchpad ############################################
+
+add_subdirectory(VulkanLaunchpad)
+include_directories(VulkanLaunchpad/src)
+link_libraries(VulkanLaunchpad)
+
+### Imgui ###############################################
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/imgui")
+include_directories("${CMAKE_SOURCE_DIR}/imgui")
+link_libraries(Imgui)
+
 #=============#
 # StarterDemo #
 #=============#
-add_executable(${PROJECT_NAME} 
-    BufferExample/Main.cpp 
-    BufferExample/FlatShadingPipeline.hpp
-    BufferExample/FlatShadingPipeline.cpp 
-    BufferExample/Teapot.h
-    BufferExample/Teapot.cpp
-    BufferExample/Path.hpp
-    BufferExample/Path.cpp 
-)
-target_link_libraries(${PROJECT_NAME} PRIVATE VulkanLaunchpad)
-target_include_directories(${PROJECT_NAME} PRIVATE VulkanLaunchpad/src)
-add_dependencies(${PROJECT_NAME} VulkanLaunchpad)
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/BufferExample")
 
 #================================#
 # IDE specific setup              #

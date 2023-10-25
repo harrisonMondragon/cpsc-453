@@ -24,6 +24,9 @@
 #include <limits>
 #include <set>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
 #include "Teapot.h"
 #include "Path.hpp"
 
@@ -31,6 +34,7 @@ VkDevice vk_device = VK_NULL_HANDLE;
 VkPhysicalDevice vk_physical_device = VK_NULL_HANDLE;
 VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
 VkSwapchainKHR vk_swapchain = VK_NULL_HANDLE;
+VkDescriptorPool imgui_descriptor_pool = VK_NULL_HANDLE;
 /* ------------------------------------------------ */
 // Some more little helpers directly declared here:
 // (Definitions of functions below the main function)
@@ -115,6 +119,15 @@ static std::vector<char const*> FilterSupportedLayers(std::vector<char const*> c
 		}
 	}
 	return result;
+}
+
+static void check_vk_result(VkResult err)
+{
+	if (err == 0)
+		return;
+	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+	if (err < 0)
+		abort();
 }
 
 /* ------------------------------------------------ */
@@ -355,6 +368,88 @@ int main(int argc, char** argv)
 	
 	VKL_LOG("Task 1.8 done.");
 
+	{// Creating descriptor pool
+		VkDescriptorPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.maxSets = 1; // You only need one descriptor set
+		poolInfo.poolSizeCount = 1;
+
+		VkDescriptorPoolSize poolSize = {};
+		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER; // Example descriptor type
+		poolSize.descriptorCount = 1; // You only need one of this type
+		poolInfo.pPoolSizes = &poolSize;
+
+		auto const result = vkCreateDescriptorPool(vklGetDevice(), &poolInfo, nullptr, &imgui_descriptor_pool);
+		assert(result == VK_SUCCESS);
+	}
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+	
+	ImGui_ImplGlfw_InitForVulkan(window, true);
+	// TODO: Handle resize
+	VkSurfaceCapabilitiesKHR surface_capabilities = hlpGetPhysicalDeviceSurfaceCapabilities(vk_physical_device, vk_surface);
+	ImGui_ImplVulkan_InitInfo init_info = {};
+	init_info.Instance = vk_instance;
+	init_info.PhysicalDevice = vk_physical_device;
+	init_info.Device = vk_device;
+	init_info.QueueFamily = selected_queue_family_index;
+	init_info.Queue = vk_queue;
+	init_info.PipelineCache = nullptr;
+	init_info.DescriptorPool = imgui_descriptor_pool;
+	init_info.Subpass = 0;
+	init_info.MinImageCount = surface_capabilities.minImageCount;
+	init_info.ImageCount = surface_capabilities.minImageCount;
+	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	init_info.Allocator = nullptr;
+	init_info.CheckVkResultFn = check_vk_result;
+	ImGui_ImplVulkan_Init(&init_info, vklGetRenderpass());
+
+	// Upload Fonts
+	{
+		// Use any command queue
+		// Begin single time command buffer;
+		VkCommandBufferAllocateInfo allocate_info{};
+		allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocate_info.commandPool = vklGetCommandPool();
+		allocate_info.commandBufferCount = 1;
+
+		VkCommandBuffer commandBuffer;
+		vkAllocateCommandBuffers(vklGetDevice(), &allocate_info, &commandBuffer);
+
+		VkCommandBufferBeginInfo begin_info{};
+		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(commandBuffer, &begin_info);
+
+		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+
+		auto result = vkEndCommandBuffer(commandBuffer);
+		assert(result == VK_SUCCESS);
+
+		VkSubmitInfo submit_info{};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &commandBuffer;
+		result = vkQueueSubmit(vk_queue, 1, &submit_info, VK_NULL_HANDLE);
+		assert(result == VK_SUCCESS);
+		result = vkQueueWaitIdle(vk_queue);
+		assert(result == VK_SUCCESS);
+
+		vkFreeCommandBuffers(vklGetDevice(), vklGetCommandPool(), 1, &commandBuffer);
+
+		ImGui_ImplVulkan_DestroyFontUploadObjects();
+	}
+
 	{
 		using namespace BufferExample;
 
@@ -384,6 +479,28 @@ int main(int argc, char** argv)
 			vklWaitForNextSwapchainImage();
 			vklStartRecordingCommands();
 
+			/*if (g_SwapChainRebuild)
+			{
+				int width, height;
+				glfwGetFramebufferSize(window, &width, &height);
+				if (width > 0 && height > 0)
+				{
+					ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
+					ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
+					g_MainWindowData.FrameIndex = 0;
+					g_SwapChainRebuild = false;
+				}
+			}*/
+
+			// Start the Dear ImGui frame
+			ImGui_ImplVulkan_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+
+			// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+			bool show_demo_window = true;
+			ImGui::ShowDemoWindow(&show_demo_window);
+
 			// Your commands here
 			flPipeline.BindPipeline();
 
@@ -403,6 +520,11 @@ int main(int argc, char** argv)
 			});
 			teapotRenderer.DrawIndexed();
 
+			// Rendering
+			ImGui::Render();
+			ImDrawData* draw_data = ImGui::GetDrawData();
+			ImGui_ImplVulkan_RenderDrawData(draw_data, vklGetCurrentCommandBuffer());
+
 			vklEndRecordingCommands();
 			vklPresentCurrentSwapchainImage();
 			glfwPollEvents(); // Handle user input
@@ -411,6 +533,12 @@ int main(int argc, char** argv)
 		// Wait for all GPU work to finish before cleaning up:
 		vkDeviceWaitIdle(vk_device);
 	}
+
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+	vkDestroyDescriptorPool(vklGetDevice(), imgui_descriptor_pool, nullptr);
+
 	/* --------------------------------------------- */
 	// Task 1.10: Cleanup
 	/* --------------------------------------------- */

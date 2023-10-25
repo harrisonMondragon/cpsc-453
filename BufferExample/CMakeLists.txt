@@ -1,0 +1,9 @@
+add_executable(${PROJECT_NAME} 
+    Main.cpp 
+    FlatShadingPipeline.hpp
+    FlatShadingPipeline.cpp 
+    Teapot.h
+    Teapot.cpp
+    Path.hpp
+    Path.cpp 
+)

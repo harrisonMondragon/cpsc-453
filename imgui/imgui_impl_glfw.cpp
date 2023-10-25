@@ -275,7 +275,7 @@ static ImGuiKey ImGui_ImplGlfw_KeyToImGuiKey(int key)
         case GLFW_KEY_F10: return ImGuiKey_F10;
         case GLFW_KEY_F11: return ImGuiKey_F11;
         case GLFW_KEY_F12: return ImGuiKey_F12;
-        case GLFW_KEY_F13: return ImGuiKey_F13;
+       /* case GLFW_KEY_F13: return ImGuiKey_F13;
         case GLFW_KEY_F14: return ImGuiKey_F14;
         case GLFW_KEY_F15: return ImGuiKey_F15;
         case GLFW_KEY_F16: return ImGuiKey_F16;
@@ -286,7 +286,7 @@ static ImGuiKey ImGui_ImplGlfw_KeyToImGuiKey(int key)
         case GLFW_KEY_F21: return ImGuiKey_F21;
         case GLFW_KEY_F22: return ImGuiKey_F22;
         case GLFW_KEY_F23: return ImGuiKey_F23;
-        case GLFW_KEY_F24: return ImGuiKey_F24;
+        case GLFW_KEY_F24: return ImGuiKey_F24;*/
         default: return ImGuiKey_None;
     }
 }
@@ -467,15 +467,15 @@ static EM_BOOL ImGui_ImplEmscripten_WheelCallback(int, const EmscriptenWheelEven
 #ifdef _WIN32
 // GLFW doesn't allow to distinguish Mouse vs TouchScreen vs Pen.
 // Add support for Win32 (based on imgui_impl_win32), because we rely on _TouchScreen info to trickle inputs differently.
-static ImGuiMouseSource GetMouseSourceFromMessageExtraInfo()
-{
-    LPARAM extra_info = ::GetMessageExtraInfo();
-    if ((extra_info & 0xFFFFFF80) == 0xFF515700)
-        return ImGuiMouseSource_Pen;
-    if ((extra_info & 0xFFFFFF80) == 0xFF515780)
-        return ImGuiMouseSource_TouchScreen;
-    return ImGuiMouseSource_Mouse;
-}
+//static ImGuiMouseSource GetMouseSourceFromMessageExtraInfo()
+//{
+//    LPARAM extra_info = ::GetMessageExtraInfo();
+//    if ((extra_info & 0xFFFFFF80) == 0xFF515700)
+//        return ImGuiMouseSource_Pen;
+//    if ((extra_info & 0xFFFFFF80) == 0xFF515780)
+//        return ImGuiMouseSource_TouchScreen;
+//    return ImGuiMouseSource_Mouse;
+//}
 static LRESULT CALLBACK ImGui_ImplGlfw_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
@@ -486,7 +486,7 @@ static LRESULT CALLBACK ImGui_ImplGlfw_WndProc(HWND hWnd, UINT msg, WPARAM wPara
     case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK: case WM_RBUTTONUP:
     case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK: case WM_MBUTTONUP:
     case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK: case WM_XBUTTONUP:
-        ImGui::GetIO().AddMouseSourceEvent(GetMouseSourceFromMessageExtraInfo());
+        //ImGui::GetIO().AddMouseSourceEvent(GetMouseSourceFromMessageExtraInfo());
         break;
     }
     return ::CallWindowProc(bd->GlfwWndProc, hWnd, msg, wParam, lParam);
