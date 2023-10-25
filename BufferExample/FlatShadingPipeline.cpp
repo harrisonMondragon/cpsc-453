@@ -1,5 +1,7 @@
 #include "FlatShadingPipeline.hpp"
 
+#include "Path.hpp"
+
 #include  <filesystem>
 
 namespace BufferExample
@@ -12,10 +14,13 @@ namespace BufferExample
 		auto path = std::filesystem::path(".");
 		auto abPath = std::filesystem::absolute(path);
 
+		auto const vertexShaderPath = Path::Instance->Get("shaders/FlatShading.vert");
+		auto const fragmentShaderPath = Path::Instance->Get("shaders/FlatShading.frag");
+
 		VklGraphicsPipelineConfig config{};
 		config.enableAlphaBlending = false;
-		config.vertexShaderPath = "assets/shaders/FlatShading.vert";
-		config.fragmentShaderPath = "assets/shaders/FlatShading.frag";
+		config.vertexShaderPath = vertexShaderPath.c_str();
+		config.fragmentShaderPath = fragmentShaderPath.c_str();
 		config.triangleCullingMode = VK_CULL_MODE_NONE;
 
 		// Position

@@ -33,6 +33,8 @@ endif()
 add_subdirectory(VulkanLaunchpad)
 
 set(PROJECT_NAME StarterDemo)
+# Working directory
+add_compile_definitions("ASSET_DIR=${CMAKE_SOURCE_DIR}/assets")
 
 #=============#
 # StarterDemo #
@@ -42,7 +44,9 @@ add_executable(${PROJECT_NAME}
     BufferExample/FlatShadingPipeline.hpp
     BufferExample/FlatShadingPipeline.cpp 
     BufferExample/Teapot.h
-    BufferExample/Teapot.cpp 
+    BufferExample/Teapot.cpp
+    BufferExample/Path.hpp
+    BufferExample/Path.cpp 
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE VulkanLaunchpad)
 target_include_directories(${PROJECT_NAME} PRIVATE VulkanLaunchpad/src)
@@ -53,12 +57,11 @@ install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin LIBRARY DESTINATION lib 
 # IDE specific setup              #
 #================================#
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    #set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
-    set_property(TARGET ${EXECUTABLE} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 elseif(CMAKE_GENERATOR MATCHES "Xcode")
     set(CMAKE_XCODE_GENERATE_SCHEME ON)
     set_target_properties(${PROJECT_NAME} PROPERTIES XCODE_GENERATE_SCHEME ON)
-    set_target_properties(${PROJECT_NAME} PROPERTIES XCODE_SCHEME_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    #set_target_properties(${PROJECT_NAME} PROPERTIES XCODE_SCHEME_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY XCODE_STARTUP_PROJECT ${PROJECT_NAME})
 endif()

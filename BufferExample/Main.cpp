@@ -25,6 +25,7 @@
 #include <set>
 
 #include "Teapot.h"
+#include "Path.hpp"
 
 VkDevice vk_device = VK_NULL_HANDLE;
 VkPhysicalDevice vk_physical_device = VK_NULL_HANDLE;
@@ -356,6 +357,8 @@ int main(int argc, char** argv)
 
 	{
 		using namespace BufferExample;
+
+		auto path = Path::Instantiate();
 
 		FlatShadingPipeline flPipeline{};
 		flPipeline.UpdateCameraData(FlatShadingPipeline::CameraData {
