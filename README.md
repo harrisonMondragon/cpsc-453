@@ -14,7 +14,7 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
     ```
     mkdir build
     ```
-3. Use the cmake to generate the necessary files for compiling the project. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter`` to setup your IDE and build environment. For this step, you can either use cmake-gui or run the cmake command directly in the terminal:
+3. Use the cmake to generate the necessary files for compiling the project. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter` to setup your IDE and build environment. For this step, you can either use cmake-gui or run the cmake command directly in the terminal:
     ```
     cd build
     cmake ..
@@ -38,6 +38,26 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 ## Available Examples and Skeletons
 
 This repository consists of the following:
-- `/Demo`:
 
-  A fully functioning example that renders a teapot using the basic graphics pipeline provided by `VulkanLaunchpad`. It is just a completion of the TO DO tasks left out in the example provided by `VulkanLaunchpadStarter`.
+- `/HW3`:
+
+  Code that you can use as starter code for HW3. The code implements most of the required functionality from HW2. HW3 relies on models that come with normals, so the code does not compute normals.
+  Additionally, given an OBJ model with texture coordinates (specified as a command-line argument), it shows how to augment Phong shading with a checkerboard texture procedurally generated in the fragment shader.
+
+  Rotation and Scaling controls are as follows:
+  - Use the `RIGHT` and `LEFT` cursor keys to rotate about the $x$ axis. 
+  - Use the `UP` and `DOWN` cursor keys to rotate about the $y$ axis.
+  - Use the `x` and `z` keys to rotate about the $z$ axis.
+  - Press `i` to toggle between intrinsic and extrinsic rotation modes.
+  - Use the `=` and `-` keys to scale up and down. 
+
+  <br>
+ 
+  Shader hot reloading is also supported.
+  - Press `F5` to hot-reload shaders.
+  
+  <br>
+ 
+  Several OBJ models are provided under `/HW3/models` for testing purposes.
+
+- `ImGui` has been integrated into this branch. See `BufferExample` on how to use it if you wish you incorporate it in `HW3`. 

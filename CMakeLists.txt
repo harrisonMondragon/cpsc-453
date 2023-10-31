@@ -52,6 +52,7 @@ link_libraries(Imgui)
 #=============#
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/BufferExample")
+add_subdirectory("${CMAKE_SOURCE_DIR}/HW3")
 
 #================================#
 # IDE specific setup              #
