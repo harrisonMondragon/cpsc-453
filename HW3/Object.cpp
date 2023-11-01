@@ -22,7 +22,7 @@ VkPipeline pipeline;
 // Struct to pack object vertex data
 struct Vertex {
 	glm::vec3 position;
-    glm::vec3 normal;
+	glm::vec3 normal;
 	glm::vec2 tex;
 }; 
 
@@ -32,19 +32,14 @@ struct ObjectPushConstants {
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
-	glm::mat4 orientation;
-};
-
-// MVP matrices that are updated interactively via push constants
-ObjectPushConstants pushConstants;
+} pushConstants;
 
 // A structure to hold object bounds
 struct ObjectBounds {
 	glm::vec3 min; 
 	glm::vec3 max; 
 	float radius;
-};
-ObjectBounds ob;
+} ob;
 
 // scale and rotation controls
 extern float scale;
@@ -165,8 +160,8 @@ void objectDraw(VkPipeline pipeline)
 	
 	// update push constants on every draw call and send them over to the GPU.
     // upload the matrix to the GPU via push constants
-	objectUpdateConstants();
-    vklSetPushConstants(
+	objectUpdateConstants( nullptr );
+	vklSetPushConstants(
 			pipeline, 
 			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 
 			&pushConstants, 
@@ -255,19 +250,27 @@ void objectCreatePipeline() {
 
 // Function to update push constants.
 // For the starter example, only the model matrix is updated.
-void objectUpdateConstants() {
+void objectUpdateConstants( GLFWwindow* window ) {
 	
 	// center the object so that rotations and scale are about the center.
 	// This is applied as a modeling transformation before handling rotation/orientation
 	// and scale
 	
 	glm::vec3 center = (ob.min + ob.max) * 0.5f;
-	pushConstants.model = glm::translate(glm::mat4(1.0f), -center );
-	pushConstants.model = orientation * pushConstants.model;
-								pushConstants.model; 											
-	pushConstants.model =  glm::scale(glm::mat4(1.0f), glm::vec3{scale, scale, scale} ) 
-							* pushConstants.model;
-	pushConstants.orientation = orientation;						
+	pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3{scale, scale, scale} ) *
+			orientation * glm::translate(glm::mat4(1.0f), -center );
+
+	// fixed camera -> no view matrix update
+
+	// if the window has changed size, update the push constants as well
+	if( window != nullptr ) {
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
+
+		pushConstants.proj = vklCreatePerspectiveProjectionMatrix(glm::radians(60.0f), 
+			static_cast<float>(width) / static_cast<float>(height), ob.radius, 5.0f*ob.radius);
+		}
+
 }
 
 // Function to create camera
