@@ -265,7 +265,7 @@ void objectUpdateConstants() {
 	pushConstants.model = glm::translate(glm::mat4(1.0f), -center );
 	pushConstants.model = orientation * pushConstants.model;
 								pushConstants.model; 											
-	pushConstants.model =  glm::scale(glm::mat4(1.0f), glm::vec3{scale, scale, scale} ) 
+	pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3{scale, scale, scale} ) 
 							* pushConstants.model;
 	pushConstants.orientation = orientation;						
 }
