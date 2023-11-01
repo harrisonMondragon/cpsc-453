@@ -3,21 +3,21 @@
 // global constants
 vec3 colour1 = vec3(0.0, 0.25, 0.25);		// for the checkerboard
 vec3 colour2 = vec3(0.75, 0.75, 0.75);
-float ambient_strength = 0.1;
 
-vec3 specular_strength = vec3(0.5, 0.5, 0.5);
+float ambient_strength = 0.1;
+vec3 specular_strength = vec3(0.5, 0.5, 0.5);	// allow some diffuse through
 float specular_power = 76.8;
 
-vec3 lightDir = vec3(1.0, 2.0, 1.0);	// view space, will be normalized later!
+vec3 lightDir = vec3(1.0, 2.0, 1.0);	// view space vector, will be normalized later!
 vec3 lightCol = vec3(1.0, 1.0, 1.0);	// overall light colour
 
 
 // data layout
 layout(location = 0) out vec4 colour;
 
-layout(location = 0) in vec3 normal;
-layout(location = 1) in vec3 viewDir;
-layout(location = 2) in vec2 tex;
+layout(location = 0) in vec3 normal;	// view space vector
+layout(location = 1) in vec3 viewDir;	// view space vector
+layout(location = 2) in vec2 tex;	// texture space
 
 
 // Procedural texture to generate a checkerboard
