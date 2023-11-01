@@ -17,4 +17,4 @@ uint32_t objectGetNumIndices();
 
 void objectCreateCamera( GLFWwindow* window );
 void objectCreatePipeline();
-void objectUpdateConstants();
+void objectUpdateConstants( GLFWwindow* window = nullptr );
