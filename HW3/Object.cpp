@@ -198,9 +198,8 @@ void objectCreatePipeline() {
 		config.enableAlphaBlending = false;
 		// path to shaders may need to be modified depending on the location
 		// of the executable
-		config.vertexShaderPath = "../../HW3/starter.vert";
-		config.fragmentShaderPath = "../../HW3/starter.frag";
-		
+		config.vertexShaderPath = "../../../HW3/starter.vert";
+		config.fragmentShaderPath = "../../../HW3/starter.frag";
 		// Can set polygonDrawMode to VK_POLYGON_MODE_LINE for wireframe rendering
 		// if supported by GPU
 		config.polygonDrawMode = VK_POLYGON_MODE_FILL;
