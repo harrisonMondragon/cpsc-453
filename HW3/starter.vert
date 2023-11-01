@@ -14,22 +14,21 @@ layout( push_constant ) uniform constants
 {
 	mat4 model;
 	mat4 view;
-    mat4 proj;
-    mat4 orientation;
+	mat4 proj;
+	mat4 orientation;
+
 } pushConstants;
 
 void main() {
     N = mat3(pushConstants.orientation) * inNormal;
 
     // Calculate view-vector
-    vec4 P = pushConstants.view * vec4(position.x, position.y, position.z, 1);
+    vec4 P = pushConstants.view * vec4(position.xyz, 1);
     V = -P.xyz;
 
     // texture coordinates are passed through
     T = inTex;
 	
-    gl_Position = pushConstants.proj * 
-    pushConstants.view * 
-    pushConstants.model * 
-    vec4(position.x, position.y, position.z, 1);
+    gl_Position = pushConstants.proj * pushConstants.view * 
+    	pushConstants.model * vec4(position.xyz, 1);	// for depth buffer
 }

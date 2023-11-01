@@ -432,13 +432,14 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 	}
 
 	// Handle rotation mode (Use 'i' to toggle)
-	if (action == GLFW_PRESS && key == GLFW_KEY_I ) {
+	if (action == GLFW_PRESS && ((key == GLFW_KEY_I)||(key == GLFW_KEY_SPACE)) ) {
 		intrinsic = !intrinsic;
 		std::cout << "Toggling rotation mode to " << (intrinsic ? "INTRINSIC" : "EXTRINSIC") << std::endl;
 	}
 
 	// Handle scale ('=' to scale up, '-' to scale down)
-	if ( action == GLFW_REPEAT && ( key == GLFW_KEY_EQUAL || key == GLFW_KEY_MINUS ) ) {
+	if ( ((action == GLFW_PRESS)||(action == GLFW_REPEAT)) && 
+			( key == GLFW_KEY_EQUAL || key == GLFW_KEY_MINUS ) ) {
 		if (key == GLFW_KEY_EQUAL ) {
 			scale += DELTA_SCALE;
 			if (scale >= MAX_SCALE) {
@@ -457,7 +458,7 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 	// 'right' and 'left' - x-axis
 	// 'up' and 'down' - y-axis
 	// 'x' and 'z' - z-axis 
-	if( action == GLFW_REPEAT ) {
+	if( (action == GLFW_PRESS) || (action == GLFW_REPEAT) ) {
 		glm::vec3 axis = {1.0f, 0.0f, 0.0f};
 		float angle = 0.0f;
 
@@ -494,6 +495,11 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 			orientation = glm::rotate(glm::mat4(1.0f), angle, axis) * orientation;
 		}
 	}
+
+	// add the ability to reset
+	if ( ((action == GLFW_PRESS)||(action == GLFW_REPEAT)) && 
+			key == GLFW_KEY_ENTER )
+		orientation = glm::mat4(1.0);
 
 	// We mark the window that it should close if ESC is pressed:
 	if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) { 
