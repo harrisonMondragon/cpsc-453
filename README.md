@@ -48,7 +48,7 @@ This repository consists of the following:
   - Use the `RIGHT` and `LEFT` cursor keys to rotate about the $x$ axis. 
   - Use the `UP` and `DOWN` cursor keys to rotate about the $y$ axis.
   - Use the `x` and `z` keys to rotate about the $z$ axis.
-  - Press `i` to toggle between intrinsic and extrinsic rotation modes.
+  - Press `i` or `spacebar` to toggle between intrinsic and extrinsic rotation modes.
   - Use the `=` and `-` keys to scale up and down. 
 
   <br>
@@ -57,7 +57,11 @@ This repository consists of the following:
   - Press `F5` to hot-reload shaders.
   
   <br>
- 
+
+ - Press `Enter` to reset the transformations on the models 
+
+<br>
+
   Several OBJ models are provided under `/HW3/models` for testing purposes.
 
 - `ImGui` has been integrated into this branch. See `BufferExample` on how to use it if you wish you incorporate it in `HW3`. 
