@@ -423,87 +423,98 @@ std::unordered_map<int, bool> g_isGlfwKeyDown;
 
 void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) 
 {
-	if (action == GLFW_PRESS) {
+	if (action == GLFW_PRESS)
 		g_isGlfwKeyDown[key] = true;
-	}
 
-	if (action == GLFW_RELEASE) {
+	if (action == GLFW_RELEASE)
 		g_isGlfwKeyDown[key] = false;
-	}
 
 	// Handle rotation mode (Use 'i' to toggle)
-	if (action == GLFW_PRESS && key == GLFW_KEY_I ) {
+	if (action == GLFW_PRESS && ((key == GLFW_KEY_I)||(key == GLFW_KEY_SPACE)) ) {
 		intrinsic = !intrinsic;
 		std::cout << "Toggling rotation mode to " << (intrinsic ? "INTRINSIC" : "EXTRINSIC") << std::endl;
 	}
 
-	// Handle scale ('=' to scale up, '-' to scale down)
-	if ( action == GLFW_REPEAT && ( key == GLFW_KEY_EQUAL || key == GLFW_KEY_MINUS ) ) {
-		if (key == GLFW_KEY_EQUAL ) {
-			scale += DELTA_SCALE;
-			if (scale >= MAX_SCALE) {
-				scale = MAX_SCALE;
-			}
-		}
-		if (key == GLFW_KEY_MINUS) {
-			scale -= DELTA_SCALE;
-			if (scale <= MIN_SCALE) {
-				scale = MIN_SCALE;
-			}
-		}
-	}
-
-	// Handle orientation (rotation) of model
-	// 'right' and 'left' - x-axis
-	// 'up' and 'down' - y-axis
-	// 'x' and 'z' - z-axis 
-	if( action == GLFW_REPEAT ) {
-		glm::vec3 axis = {1.0f, 0.0f, 0.0f};
-		float angle = 0.0f;
-
-		if ( key == GLFW_KEY_RIGHT) {
-			axis = glm::vec3{1.0f, 0.0f, 0.0f};
-			angle = DELTA_ANGLE;
-		}
-		if ( key == GLFW_KEY_LEFT) {
-			axis = glm::vec3{1.0f, 0.0f, 0.0f};
-			angle = -DELTA_ANGLE;
-		}
-
-		if ( key == GLFW_KEY_UP) {
-			axis = glm::vec3{0.0f, 1.0f, 0.0f};
-			angle = -DELTA_ANGLE;
-		}
-		if ( key == GLFW_KEY_DOWN) {
-			axis = glm::vec3{0.0f, 1.0f, 0.0f};
-			angle = DELTA_ANGLE;
-		}
-
-		if ( key == GLFW_KEY_X) {
-			axis = glm::vec3{0.0f, 0.0f, 1.0f};
-			angle = -DELTA_ANGLE;
-		}
-		if ( key == GLFW_KEY_Z) {
-			axis = glm::vec3{0.0f, 0.0f, 1.0f};
-			angle = DELTA_ANGLE;
-		}
-
-		if ( intrinsic ) {
-			orientation = orientation * glm::rotate(glm::mat4(1.0f), angle, axis);
-		} else {
-			orientation = glm::rotate(glm::mat4(1.0f), angle, axis) * orientation;
-		}
-	}
-
 	// We mark the window that it should close if ESC is pressed:
-	if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) { 
+	if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE)
 		glfwSetWindowShouldClose(glfw_window, true); 
+
+	// since every other possibility involves either a press or a repeat, we can exit if neither is true
+	if( (action != GLFW_PRESS) && (action != GLFW_REPEAT) )
+		return;
+
+	// wrap the rest in a giant switch statement
+	glm::vec3 axis = {1.0f, 0.0f, 0.0f};
+	float angle = 0.0f;
+
+	switch( key ) {
+
+		// scaling up and down
+		case GLFW_KEY_EQUAL:
+			scale += DELTA_SCALE;
+			if (scale >= MAX_SCALE)
+				scale = MAX_SCALE;
+			break;
+
+		case GLFW_KEY_MINUS:
+			scale -= DELTA_SCALE;
+			if (scale <= MIN_SCALE)
+				scale = MIN_SCALE;
+			break;
+
+		// 'right' and 'left' - x-axis
+		case GLFW_KEY_RIGHT:
+			axis = glm::vec3{1.0f, 0.0f, 0.0f};
+			angle = DELTA_ANGLE;
+			break;
+
+		case GLFW_KEY_LEFT:
+			axis = glm::vec3{1.0f, 0.0f, 0.0f};
+			angle = -DELTA_ANGLE;
+			break;
+
+		// 'up' and 'down' - y-axis
+		case GLFW_KEY_UP:
+			axis = glm::vec3{0.0f, 1.0f, 0.0f};
+			angle = -DELTA_ANGLE;
+			break;
+		
+		case GLFW_KEY_DOWN:
+			axis = glm::vec3{0.0f, 1.0f, 0.0f};
+			angle = DELTA_ANGLE;
+			break;
+
+		// 'x' and 'z' - z-axis 
+		case GLFW_KEY_X:
+			axis = glm::vec3{0.0f, 0.0f, 1.0f};
+			angle = -DELTA_ANGLE;
+			break;
+
+		case GLFW_KEY_Z:
+			axis = glm::vec3{0.0f, 0.0f, 1.0f};
+			angle = DELTA_ANGLE;
+			break;
+
+		// add the ability to reset
+		case GLFW_KEY_ENTER:
+			orientation = glm::mat4(1.0);
+			break;
+	}
+
+	// only change the orientation if asked
+	if( angle != 0.0f ) {
+		if ( intrinsic )
+			orientation = orientation * glm::rotate(glm::mat4(1.0f), angle, axis);
+		else
+			orientation = glm::rotate(glm::mat4(1.0f), angle, axis) * orientation;
 	}
 }
 
 void handleResizeCallback(GLFWwindow* window, int width, int height)
 {
 	vklNotifyResized(GenerateSwapChainConfig());
+	objectUpdateConstants( window );			// update the projection matrix!
+
 }
 
 VklSwapchainConfig GenerateSwapChainConfig()
