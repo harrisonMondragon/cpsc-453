@@ -7,15 +7,14 @@
 namespace BufferExample
 {
 
+	using namespace shared;
+
 	//-------------------------------------------------------------------------------------------------
 
 	FlatShadingPipeline::FlatShadingPipeline()
 	{
-		auto path = std::filesystem::path(".");
-		auto abPath = std::filesystem::absolute(path);
-
-		auto const vertexShaderPath = Path::Instance->Get("shaders/FlatShading.vert");
-		auto const fragmentShaderPath = Path::Instance->Get("shaders/FlatShading.frag");
+		auto const vertexShaderPath = Path::Instance->Get("shaders/buffer-example/FlatShading.vert");
+		auto const fragmentShaderPath = Path::Instance->Get("shaders/buffer-example/FlatShading.frag");
 
 		VklGraphicsPipelineConfig config{};
 		config.enableAlphaBlending = false;

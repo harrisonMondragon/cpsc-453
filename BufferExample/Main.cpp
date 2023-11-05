@@ -453,7 +453,7 @@ int main(int argc, char** argv)
 	{
 		using namespace BufferExample;
 
-		auto path = Path::Instantiate();
+		auto path = shared::Path::Instantiate();
 
 		FlatShadingPipeline flPipeline{};
 		flPipeline.UpdateCameraData(FlatShadingPipeline::CameraData {
