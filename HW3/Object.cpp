@@ -191,8 +191,8 @@ void objectCreatePipeline() {
 	// Pipeline creation
 	// ------------------------------
 
-	auto const vertShaderPath = Path::Instance->Get("shaders/hW3/starter.vert");
-	auto const fragShaderPath = Path::Instance->Get("shaders/hW3/starter.frag");
+	auto const vertShaderPath = Path::Instance->Get("shaders/hw3/starter.vert");
+	auto const fragShaderPath = Path::Instance->Get("shaders/hw3/starter.frag");
 
 	VklGraphicsPipelineConfig config{};
 		config.enableAlphaBlending = false;
