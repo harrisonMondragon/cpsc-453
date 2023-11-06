@@ -47,9 +47,13 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/imgui")
 include_directories("${CMAKE_SOURCE_DIR}/imgui")
 link_libraries(Imgui)
 
-#=============#
-# StarterDemo #
-#=============#
+### Shared ###############################################
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/shared")
+include_directories("${CMAKE_SOURCE_DIR}/shared")
+link_libraries(Shared)
+
+### Executables###########################################
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/BufferExample")
 add_subdirectory("${CMAKE_SOURCE_DIR}/HW3")

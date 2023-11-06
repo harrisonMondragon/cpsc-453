@@ -1,9 +1,7 @@
-add_executable(${PROJECT_NAME} 
+add_executable("BufferExample"
     Main.cpp 
     FlatShadingPipeline.hpp
     FlatShadingPipeline.cpp 
     Teapot.h
     Teapot.cpp
-    Path.hpp
-    Path.cpp 
 )

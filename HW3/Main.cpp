@@ -15,12 +15,13 @@
 // Include some local helper functions:
 #include "VulkanHelpers.h"
 #include "Object.h"
-
+#include "Path.hpp"
 // Include functionality from the standard library:
 #include <vector>
 #include <unordered_map>
 #include <limits>
 #include <set>
+#include "stb_image.h"
 
 // vulkan related variables that are globally accessible.
 
@@ -377,31 +378,39 @@ int main(int argc, char** argv)
  	// At this point, we can register window resize callback
 	glfwSetWindowSizeCallback(window, handleResizeCallback);
 
-	// Now create initial geometry and pass it to the GPU
-	// Obj file is expected to be passed as a command line arg
-	objectCreateGeometryAndBuffers( std::string( argv[1] ), window );
-	
-	/* --------------------------------------------- */
-	// Task 1.9:  Implement the Render Loop
-	/* --------------------------------------------- */
+	{
+		auto path = shared::Path::Instantiate();
 
-	// enable shader hot reloading
-	vklEnablePipelineHotReloading(window, GLFW_KEY_F5);
-	while (!glfwWindowShouldClose(window)) {
-		vklWaitForNextSwapchainImage();
-    	vklStartRecordingCommands();
-		
-    	// Your commands here
-		objectDraw();
+		std::string modelPath = argc > 1 ? std::string(argv[1]) : shared::Path::Instance->Get("models/chess_bishop/bishop.obj");
 
-    	vklEndRecordingCommands();
-    	vklPresentCurrentSwapchainImage();
-		glfwPollEvents(); // Handle user input
+		// Now create initial geometry and pass it to the GPU
+		// Obj file is expected to be passed as a command line arg
+		objectCreateGeometryAndBuffers(modelPath, window);
+
+		/* --------------------------------------------- */
+		// Task 1.9:  Implement the Render Loop
+		/* --------------------------------------------- */
+
+		{
+
+			// enable shader hot reloading
+			vklEnablePipelineHotReloading(window, GLFW_KEY_F5);
+			while (!glfwWindowShouldClose(window)) {
+				vklWaitForNextSwapchainImage();
+				vklStartRecordingCommands();
+
+				// Your commands here
+				objectDraw();
+
+				vklEndRecordingCommands();
+				vklPresentCurrentSwapchainImage();
+				glfwPollEvents(); // Handle user input
+			}
+
+			// Wait for all GPU work to finish before cleaning up:
+			vkDeviceWaitIdle(vk_device);
+		}
 	}
-
-	// Wait for all GPU work to finish before cleaning up:
-	vkDeviceWaitIdle(vk_device);
-
 	/* --------------------------------------------- */
 	// Task 1.10: Cleanup
 	/* --------------------------------------------- */

@@ -7,7 +7,9 @@
 #include <vulkan/vulkan.hpp>
 #include <glm/gtx/normal.hpp>
 #include "Camera.h"
+#include "Path.hpp"
 
+using namespace shared;
 
 // buffers that will live on the GPU.
 // No geometry retained on the CPU, all data sent to the GPU.
@@ -189,12 +191,16 @@ void objectCreatePipeline() {
 	// Pipeline creation
 	// ------------------------------
 
+	auto const vertShaderPath = Path::Instance->Get("shaders/hW3/starter.vert");
+	auto const fragShaderPath = Path::Instance->Get("shaders/hW3/starter.frag");
+
 	VklGraphicsPipelineConfig config{};
 		config.enableAlphaBlending = false;
 		// path to shaders may need to be modified depending on the location
 		// of the executable
-		config.vertexShaderPath = "../../../HW3/starter.vert";
-		config.fragmentShaderPath = "../../../HW3/starter.frag";
+		config.vertexShaderPath = vertShaderPath.c_str();
+		config.fragmentShaderPath = fragShaderPath.c_str();
+		
 		// Can set polygonDrawMode to VK_POLYGON_MODE_LINE for wireframe rendering
 		// if supported by GPU
 		config.polygonDrawMode = VK_POLYGON_MODE_FILL;
