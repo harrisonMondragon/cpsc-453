@@ -17,6 +17,7 @@ using namespace shared;
 uint32_t mNumObjectIndices;
 VkBuffer mObjectVertexData;
 VkBuffer mObjectIndices;
+VkDescriptorSet ds;
 
 // A pipeline that can be used for HW2
 VkPipeline pipeline;
@@ -158,6 +159,7 @@ void objectDraw(VkPipeline pipeline)
 	cb.bindVertexBuffers(0u, { vk::Buffer{ objectGetVertexBuffer() } }, { vk::DeviceSize{ 0 } });
 	cb.bindIndexBuffer(vk::Buffer{ objectGetIndicesBuffer() }, vk::DeviceSize{ 0 }, vk::IndexType::eUint32);
 
+	vklBindDescriptorSetToPipeline(ds, pipeline);
 	// Update things that need to be updated per draw call
 	
 	// update push constants on every draw call and send them over to the GPU.
@@ -250,7 +252,80 @@ void objectCreatePipeline() {
 			.offset = 0,
 			.size = sizeof(ObjectPushConstants),
 		});
-	pipeline = vklCreateGraphicsPipeline( config );		
+
+
+		int grid[16][16] = {
+			{20, 45, 30, 5, 12, 36, 85, 74, 63, 11, 95, 42, 50, 7, 26, 19},
+			{40, 72, 15, 81, 8, 58, 33, 22, 69, 25, 60, 90, 2, 38, 18, 55},
+			{65, 14, 44, 70, 28, 52, 17, 80, 6, 49, 75, 93, 35, 78, 87, 3},
+			{68, 99, 41, 23, 59, 21, 89, 9, 27, 84, 46, 10, 47, 16, 82, 32},
+			{98, 24, 54, 61, 91, 37, 77, 53, 1, 79, 4, 71, 48, 29, 62, 96},
+			{34, 56, 76, 13, 67, 88, 43, 57, 94, 64, 83, 31, 66, 73, 39, 51},
+			{100, 47, 78, 20, 35, 63, 8, 72, 57, 41, 96, 14, 53, 91, 29, 83},
+			{42, 86, 18, 69, 27, 50, 5, 37, 74, 23, 68, 3, 45, 94, 12, 60},
+			{11, 80, 31, 77, 48, 26, 66, 21, 59, 9, 54, 89, 16, 40, 98, 7},
+			{67, 15, 44, 93, 22, 62, 38, 84, 71, 32, 56, 1, 76, 36, 97, 19},
+			{24, 79, 5, 70, 33, 85, 51, 10, 65, 2, 47, 75, 17, 92, 4, 88},
+			{39, 73, 12, 61, 28, 55, 82, 6, 90, 25, 52, 99, 13, 43, 81, 30},
+			{58, 97, 34, 64, 19, 49, 100, 11, 78, 46, 80, 7, 70, 28, 94, 42},
+			{20, 86, 27, 73, 4, 41, 89, 14, 55, 37, 67, 8, 60, 35, 79, 3},
+			{62, 17, 52, 96, 25, 44, 85, 6, 74, 21, 68, 1, 51, 38, 83, 9},
+			{43, 77, 15, 94, 32, 69, 100, 13, 80, 47, 76, 5, 90, 26, 72, 18}
+		};
+
+		// ahh
+		config.descriptorLayout.emplace_back(VkDescriptorSetLayoutBinding{
+			.binding = 0,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+		});
+
+		pipeline = vklCreateGraphicsPipeline( config );
+
+		std::vector<VkDescriptorPoolSize> dps;
+
+		dps.emplace_back(VkDescriptorPoolSize{
+			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 1,
+		});
+
+		VkDescriptorPoolCreateInfo dpci = {};
+		dpci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		dpci.poolSizeCount = dps.size();
+		dpci.pPoolSizes = dps.data();
+		dpci.maxSets = 1; // how many frames are you rendering?
+
+		VkDescriptorPool dp;
+		vkCreateDescriptorPool(vklGetDevice(), &dpci, nullptr, &dp);
+
+		VkBuffer buffer;
+
+		buffer = vklCreateHostCoherentBufferAndUploadData(&grid, sizeof(grid), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+
+		VkDescriptorSetAllocateInfo dsai = {};
+		dsai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		dsai.descriptorPool = dp;
+		dsai.descriptorSetCount = 1;
+		VkDescriptorSetLayout x = vklGetDescriptorLayout(pipeline);
+		dsai.pSetLayouts = &x;
+
+		vkAllocateDescriptorSets(vklGetDevice(), &dsai, &ds);
+
+		VkDescriptorBufferInfo dbi = {}; // multiple buffer infos are permitted
+		dbi.buffer = buffer;
+		dbi.offset = 0; // recycling one big buffer is permitted
+		dbi.range = sizeof(grid);
+
+		VkWriteDescriptorSet wds = {}; // multiples permitted, also used for uniforms
+		wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		wds.dstSet = ds;
+		wds.descriptorCount = 1;
+		wds.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		wds.pBufferInfo = &dbi;
+		wds.dstBinding = 0;
+		// number of WDS's
+		vkUpdateDescriptorSets(vklGetDevice(), 1, &wds, 0, nullptr);
 }
 
 // Function to update push constants.
