@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <limits>
 #include <set>
-#include "stb_image.h"
+// #include "stb_image.h"
 
 // vulkan related variables that are globally accessible.
 

@@ -9,7 +9,12 @@
 #include "Camera.h"
 #include "Path.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 using namespace shared;
+
+extern VkPhysicalDevice vk_physical_device;
 
 // buffers that will live on the GPU.
 // No geometry retained on the CPU, all data sent to the GPU.
@@ -121,6 +126,20 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow*
 			data.indices.data(), sizeof(data.indices[0]) * data.indices.size(),
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 	}
+
+	// Image stuff
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load("C:/Users/Harry/Desktop/CPSC453/cpsc-453/assets/models/chess_rook/rook.colour.white.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+	if (!pixels) {
+		throw std::runtime_error("failed to load texture image!");
+	}
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	// Now Create the camera and pipeline
 	std::cout << "Now Creating Camera and Pipeline " << std::endl;
@@ -366,4 +385,43 @@ void objectCreateCamera( GLFWwindow* window ) {
 	pushConstants.view = glm::translate(glm::mat4(1.0f), glm::vec3{0.f, 0.f, -3.0*ob.radius} );
 	pushConstants.proj = vklCreatePerspectiveProjectionMatrix(glm::radians(60.0f), 
 		static_cast<float>(width) / static_cast<float>(height), ob.radius, 5.0f*ob.radius);
+}
+
+uint32_t getMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(vk_physical_device, &memProperties);
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+			return i;
+		}
+	}
+
+	throw std::runtime_error("failed to find suitable memory type!");
+}
+
+void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(vklGetDevice(), &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create buffer!");
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(vklGetDevice(), buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = getMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(vklGetDevice(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate buffer memory!");
+    }
+
+    vkBindBufferMemory(vklGetDevice(), buffer, bufferMemory, 0);
 }

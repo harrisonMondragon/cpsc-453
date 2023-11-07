@@ -18,3 +18,6 @@ uint32_t objectGetNumIndices();
 void objectCreateCamera( GLFWwindow* window );
 void objectCreatePipeline();
 void objectUpdateConstants( GLFWwindow* window = nullptr );
+
+uint32_t getMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
