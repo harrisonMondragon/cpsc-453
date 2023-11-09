@@ -15,6 +15,7 @@
 using namespace shared;
 
 extern VkPhysicalDevice vk_physical_device;
+extern uint32_t selected_queue_family_index;
 
 // buffers that will live on the GPU.
 // No geometry retained on the CPU, all data sent to the GPU.
@@ -23,6 +24,8 @@ uint32_t mNumObjectIndices;
 VkBuffer mObjectVertexData;
 VkBuffer mObjectIndices;
 
+VkImageView textureImageView;
+VkSampler textureSampler;
 VkCommandPool commandPool;
 VkImage textureImage;
 VkDeviceMemory textureImageMemory;
@@ -134,7 +137,7 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow*
 
 	createCommandPool();
 
-	// CreateTextureImage from tutorial
+	// START ----- createTextureImage from tutorial
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load("C:/Users/Harry/Desktop/CPSC453/cpsc-453/assets/models/chess_rook/rook.colour.white.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -162,10 +165,15 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow*
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
+	// END ----- createTextureImage from tutorial
 
+	// START ----- createTextureImageView from tutorial
+	textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+	// END ----- createTextureImageView from tutorial
 
-
-
+	// START ----- createTextureSampler from tutorial
+	createTextureSampler();
+	// END ----- createTextureSampler from tutorial
 
 
 	// Now Create the camera and pipeline
@@ -184,6 +192,8 @@ void objectDestroyBuffers() {
 	vklDestroyHostCoherentBufferAndItsBackingMemory( mObjectIndices );
 	vkDestroyImage(device, textureImage, nullptr);
     vkFreeMemory(device, textureImageMemory, nullptr);
+	vkDestroySampler(device, textureSampler, nullptr);
+	vkDestroyImageView(device, textureImageView, nullptr);
 }
 
 void objectDraw() {
@@ -250,11 +260,11 @@ void objectCreatePipeline() {
 		// of the executable
 		config.vertexShaderPath = vertShaderPath.c_str();
 		config.fragmentShaderPath = fragShaderPath.c_str();
-		
+
 		// Can set polygonDrawMode to VK_POLYGON_MODE_LINE for wireframe rendering
 		// if supported by GPU
 		config.polygonDrawMode = VK_POLYGON_MODE_FILL;
-		
+
 		// Back face culling may or may not be needed.
 		// Uncomment this to enable it.
 		// config.triangleCullingMode = VK_CULL_MODE_BACK_BIT;
@@ -293,7 +303,7 @@ void objectCreatePipeline() {
 			.format = VK_FORMAT_R32G32_SFLOAT,
 			.offset = offsetof(Vertex, tex),
 		});
-            
+
 		// Push constants should be available in both the vertex and fragment shaders
 		config.pushConstantRanges.emplace_back(VkPushConstantRange{
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT,
@@ -379,11 +389,11 @@ void objectCreatePipeline() {
 // Function to update push constants.
 // For the starter example, only the model matrix is updated.
 void objectUpdateConstants( GLFWwindow* window ) {
-	
+
 	// center the object so that rotations and scale are about the center.
 	// This is applied as a modeling transformation before handling rotation/orientation
 	// and scale
-	
+
 	glm::vec3 center = (ob.min + ob.max) * 0.5f;
 	pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3{scale, scale, scale} ) *
 			orientation * glm::translate(glm::mat4(1.0f), -center );
@@ -516,7 +526,11 @@ VkCommandBuffer beginSingleTimeCommands() {
 }
 
 void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
-    vkEndCommandBuffer(commandBuffer);
+    auto device = vklGetDevice();
+	VkQueue graphicsQueue;
+	vkGetDeviceQueue(device, selected_queue_family_index, 0, &graphicsQueue);
+
+	vkEndCommandBuffer(commandBuffer);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -600,14 +614,60 @@ void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayo
 }
 
 void createCommandPool() {
-	QueueFamilyIndices queueFamilyIndices = findQueueFamilies(vk_physical_device);
+	// QueueFamilyIndices queueFamilyIndices = findQueueFamilies(vk_physical_device);
 
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+	poolInfo.queueFamilyIndex = selected_queue_family_index;
 
 	if (vkCreateCommandPool(vklGetDevice(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics command pool!");
+	}
+}
+
+VkImageView createImageView(VkImage image, VkFormat format) {
+	auto device = vklGetDevice();
+	VkImageViewCreateInfo viewInfo{};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = image;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = format;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	VkImageView imageView;
+	if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create image view!");
+	}
+
+	return imageView;
+}
+
+void createTextureSampler() {
+	auto device = vklGetDevice();
+	VkPhysicalDeviceProperties properties{};
+	vkGetPhysicalDeviceProperties(vk_physical_device, &properties);
+
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+	if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture sampler!");
 	}
 }

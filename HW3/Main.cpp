@@ -29,6 +29,7 @@ VkDevice vk_device = VK_NULL_HANDLE;
 VkPhysicalDevice vk_physical_device = VK_NULL_HANDLE;
 VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
 VkSwapchainKHR vk_swapchain = VK_NULL_HANDLE;
+uint32_t selected_queue_family_index;
 
 /* ------------------------------------------------ */
 // Some more little helpers directly declared here:
@@ -284,7 +285,11 @@ int main(int argc, char** argv)
 	// Find a suitable queue family and assign its index to the following variable:
 	// Hint: Use selectQueueFamilyIndex, but complete its implementation before!
 	//uint32_t selected_queue_family_index = std::numeric_limits<uint32_t>::max();
-	uint32_t selected_queue_family_index = selectQueueFamilyIndex(vk_physical_device, vk_surface);
+
+
+
+
+	selected_queue_family_index = selectQueueFamilyIndex(vk_physical_device, vk_surface);
 
 	// Sanity check if we have selected a valid queue family index:
 	uint32_t queue_family_count = 0;
