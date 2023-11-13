@@ -19,9 +19,11 @@ layout(location = 0) in vec3 normal;	// view space vector
 layout(location = 1) in vec3 viewDir;	// view space vector
 layout(location = 2) in vec2 tex;	// texture space
 
-layout(binding = 0) uniform MyUBO {
-    int grid[16][16];
-} myUBO;
+layout(binding = 1) uniform sampler2D texSampler;
+
+// layout(binding = 0) uniform MyUBO {
+//     int grid[16][16];
+// } myUBO;
 
 // Procedural texture to generate a checkerboard
 bool cboard( vec2 t ) {
@@ -32,41 +34,41 @@ bool cboard( vec2 t ) {
     return ((x + y) % 2 == 0);
 }
 
-float Noise(vec2 interp){
-    float u = interp.x;
-    float v = interp.y;
+// float Noise(vec2 interp){
+//     float u = interp.x;
+//     float v = interp.y;
 
-    float fj0k0 = myUBO.grid[int(floor(u))][int(floor(v))];
-    float fj0k1 = myUBO.grid[int(floor(u))][int(ceil(v))];
-    float fj1k0 = myUBO.grid[int(ceil(u))][int(floor(v))];
-    float fj1k1 = myUBO.grid[int(ceil(u))][int(ceil(v))];
+//     float fj0k0 = myUBO.grid[int(floor(u))][int(floor(v))];
+//     float fj0k1 = myUBO.grid[int(floor(u))][int(ceil(v))];
+//     float fj1k0 = myUBO.grid[int(ceil(u))][int(floor(v))];
+//     float fj1k1 = myUBO.grid[int(ceil(u))][int(ceil(v))];
 
-    float left_edge = (1-v)*fj0k0 + (v)*fj0k1;
-    float right_edge = (1-v)*fj1k0 + (v)*fj1k1;
+//     float left_edge = (1-v)*fj0k0 + (v)*fj0k1;
+//     float right_edge = (1-v)*fj1k0 + (v)*fj1k1;
 
-    return (1-u)*left_edge + (u)*right_edge;
-}
+//     return (1-u)*left_edge + (u)*right_edge;
+// }
 
-float T(vec2 tex_coords){
-    float turb = 0;
+// float T(vec2 tex_coords){
+//     float turb = 0;
 
-    for(int i = 0; i <= 4; i++){
-        turb += (Noise(vec2(pow(2,i)*tex_coords.x, pow(2,i)*tex_coords.y)))/(pow(2,i));
-    }
+//     for(int i = 0; i <= 4; i++){
+//         turb += (Noise(vec2(pow(2,i)*tex_coords.x, pow(2,i)*tex_coords.y)))/(pow(2,i));
+//     }
 
-    return turb;
-}
+//     return turb;
+// }
 
-float S(vec2 tex_coords){
-    float u = tex_coords.x;
-    float v = tex_coords.y;
+// float S(vec2 tex_coords){
+//     float u = tex_coords.x;
+//     float v = tex_coords.y;
 
-    float m = 24;
+//     float m = 24;
 
-    float sin_input = m * radians(180) * (u+v+(T(tex_coords)));
+//     float sin_input = m * radians(180) * (u+v+(T(tex_coords)));
 
-    return 0.5 * (1+sin(sin_input));
-}
+//     return 0.5 * (1+sin(sin_input));
+// }
 
 void main() {
 
@@ -75,7 +77,7 @@ void main() {
     vec3 L = normalize(lightDir);
     vec3 V = normalize(viewDir);
 
-    float perlin = S(tex);
+    //float perlin = S(tex);
 
     // Calculate R locally
     vec3 R = reflect(-L, N);
@@ -84,13 +86,15 @@ void main() {
     //vec3 basecol = (cboard(tex)) ? colour1 : colour2;
 
     vec3 basecol = vec3(0, 1, 0);
-    vec3 diffuse = max(dot(N, L), 0.0) * basecol * perlin;
+    // vec3 diffuse = max(dot(N, L), 0.0) * basecol * perlin;
+    vec3 diffuse = max(dot(N, L), 0.0) * basecol;
 
     vec3 ambient = ambient_strength * basecol;
 
     vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
 
     // Write final colour to the framebuffer
-    colour = vec4((ambient + diffuse + specular)*lightCol, 1.0);
+    //colour = vec4((ambient + diffuse + specular)*lightCol, 1.0);
+    colour = texture(texSampler, tex);
 
 }

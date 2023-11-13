@@ -5,7 +5,7 @@ layout(location = 1) in vec3 inNormal;  // local space
 layout(location = 2) in vec2 inTex;	// texture space
 
 // normal, view vector and tex coords. to be passed to fragment shader
-layout(location=0) out vec3 N;		// view space vector
+layout(location=0) out vec3 N;		// normal vector
 layout(location=1) out vec3 V;		// view space vector
 layout(location=2) out vec2 T;		// texture space
 
@@ -33,7 +33,7 @@ void main() {
 
     // texture coordinates are passed through
     T = inTex;
-	
+
     // hack to simplify the depth buffer, otherwise ignored (homogenized camera space)
     gl_Position = pushConstants.proj * mv * vec4(position.xyz, 1);	
 }
