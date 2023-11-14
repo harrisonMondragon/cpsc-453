@@ -281,14 +281,10 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Task 1.5: Select a Queue Family
 	/* --------------------------------------------- */
-	
+
 	// Find a suitable queue family and assign its index to the following variable:
 	// Hint: Use selectQueueFamilyIndex, but complete its implementation before!
 	//uint32_t selected_queue_family_index = std::numeric_limits<uint32_t>::max();
-
-
-
-
 	selected_queue_family_index = selectQueueFamilyIndex(vk_physical_device, vk_surface);
 
 	// Sanity check if we have selected a valid queue family index:

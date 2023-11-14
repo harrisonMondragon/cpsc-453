@@ -14,16 +14,17 @@
 
 using namespace shared;
 
+// Variables needed from main
 extern VkPhysicalDevice vk_physical_device;
 extern uint32_t selected_queue_family_index;
 
 // buffers that will live on the GPU.
 // No geometry retained on the CPU, all data sent to the GPU.
-
 uint32_t mNumObjectIndices;
 VkBuffer mObjectVertexData;
 VkBuffer mObjectIndices;
 
+// Global constants from tutorial
 VkImageView textureImageView;
 VkSampler textureSampler;
 VkCommandPool commandPool;
@@ -31,7 +32,6 @@ VkDescriptorPool descriptorPool;
 VkDescriptorSetLayout descriptorSetLayout;
 VkImage textureImage;
 VkDeviceMemory textureImageMemory;
-
 VkDescriptorSet ds;
 
 // A pipeline that can be used for HW2
@@ -42,7 +42,6 @@ struct Vertex {
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec2 tex;
-	//glm::vec3 color;
 };
 
 // Send model, view and projection matrices as push constants
@@ -55,8 +54,8 @@ struct ObjectPushConstants {
 
 // A structure to hold object bounds
 struct ObjectBounds {
-	glm::vec3 min; 
-	glm::vec3 max; 
+	glm::vec3 min;
+	glm::vec3 max;
 	float radius;
 } ob;
 
@@ -67,7 +66,7 @@ extern glm::mat4 orientation;
 // Load geometry data from a specified obj file.
 // Geometry data is assumed to have per-vertex positions, normals and texture corrdinates
 // as well as face indices.
-void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow* window ) 
+void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow* window )
 {
 	VklGeometryData data = vklLoadModelGeometry( path_to_obj );
 
@@ -92,9 +91,9 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow*
 		}
 	}
 	float radius = glm::length(max - (min + max) * 0.5f);
-	std::cout << "Bounding Box: " << "( " << min.x << ", " << min.y << ", " << min.z << " ) -- "  
+	std::cout << "Bounding Box: " << "( " << min.x << ", " << min.y << ", " << min.z << " ) -- "
 		<< "( " << max.x << ", " << max.y << ", " << max.z << " )" << std::endl;
-	std::cout << "Radius of circumscribing sphere: " << radius << std::endl; 
+	std::cout << "Radius of circumscribing sphere: " << radius << std::endl;
 
 	// initialize bounds and orientation
 	ob.min = min;
@@ -149,7 +148,7 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow*
 
 	// START ----- createTextureImage from tutorial
 	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("C:/Users/Harry/Desktop/cpsc453/cpsc-453/assets/models/timmy_cup/timmy_cup.colour.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load("C:/Users/Harry/Desktop/cpsc453/cpsc-453/assets/models/donut/donut.colour.plain.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 	if (!pixels) {
@@ -210,18 +209,10 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow*
     allocInfo.descriptorPool = descriptorPool;
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &descriptorSetLayout;
-	// VkDescriptorSetLayout x = vklGetDescriptorLayout(pipeline);
-	// dsai.pSetLayouts = &x;
 
-	//vkAllocateDescriptorSets(vklGetDevice(), &allocInfo, &ds);
 	if (vkAllocateDescriptorSets(vklGetDevice(), &allocInfo, &ds) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate descriptor set!");
 	}
-
-	// VkDescriptorBufferInfo dbi = {}; // multiple buffer infos are permitted
-	// dbi.buffer = buffer;
-	// dbi.offset = 0; // recycling one big buffer is permitted
-	// dbi.range = sizeof(grid);
 
 	VkDescriptorImageInfo imageInfo{};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -236,16 +227,6 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow*
 	wds.descriptorCount = 1;
 	wds.pImageInfo = &imageInfo;
 
-
-	// descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	// descriptorWrites[1].dstSet = descriptorSets[i];
-	// descriptorWrites[1].dstBinding = 1;
-	// descriptorWrites[1].dstArrayElement = 0;
-	// descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	// descriptorWrites[1].descriptorCount = 1;
-	// descriptorWrites[1].pImageInfo = &imageInfo;
-
-	// number of WDS's
 	vkUpdateDescriptorSets(vklGetDevice(), 1, &wds, 0, nullptr);
 	// END ----- createDescriptorSets from tutorial
 }
@@ -290,9 +271,9 @@ void objectDraw(VkPipeline pipeline)
     // upload the matrix to the GPU via push constants
 	objectUpdateConstants( nullptr );
 	vklSetPushConstants(
-			pipeline, 
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 
-			&pushConstants, 
+			pipeline,
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			&pushConstants,
 			sizeof(ObjectPushConstants)
 		);
 
@@ -335,8 +316,7 @@ void objectCreatePipeline() {
 		// Uncomment this to enable it.
 		// config.triangleCullingMode = VK_CULL_MODE_BACK_BIT;
 
-		// Binding for vertex buffer, using 1 buffer with per-vertex rate.
-		// This will send per-vertex data to the GPU.
+		// Vertex data at binding 0
 		config.vertexInputBuffers.emplace_back(VkVertexInputBindingDescription{
 			.binding = 0,
 			.stride = sizeof(Vertex),
@@ -370,6 +350,7 @@ void objectCreatePipeline() {
 			.offset = offsetof(Vertex, tex),
 		});
 
+		// Image sampler at binding 1
 		config.descriptorLayout.emplace_back(VkDescriptorSetLayoutBinding{
             .binding = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -377,15 +358,6 @@ void objectCreatePipeline() {
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr,
         });
-
-		// // Color data at location 3
-		// config.inputAttributeDescriptions.emplace_back(VkVertexInputAttributeDescription{
-		// 	//.location = static_cast<uint32_t>(config.inputAttributeDescriptions.size()),
-		// 	.location = 3,
-		// 	.binding = 0,
-		// 	.format = VK_FORMAT_R32G32B32_SFLOAT,
-		// 	.offset = offsetof(Vertex, colour),
-		// });
 
 		// Push constants should be available in both the vertex and fragment shaders
 		config.pushConstantRanges.emplace_back(VkPushConstantRange{
@@ -398,7 +370,6 @@ void objectCreatePipeline() {
 
 		// Bindings vector
 		std::vector<VkDescriptorSetLayoutBinding> bindings;
-		//std::array<VkDescriptorSetLayoutBinding, 1> bindings;
 
 		// Sampler layout binding
 		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
@@ -408,7 +379,6 @@ void objectCreatePipeline() {
 		samplerLayoutBinding.pImmutableSamplers = nullptr;
 		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		bindings.push_back(samplerLayoutBinding);
-		//bindings[0] = samplerLayoutBinding;
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -426,79 +396,6 @@ void objectCreatePipeline() {
 
 	// Actually create the pipeline using the config
 	pipeline = vklCreateGraphicsPipeline(config);
-
-
-	// //----------- Image sampler stuff -------------
-
-	// // Poolsizes vector
-	// std::vector<VkDescriptorPoolSize> poolSizes;
-
-	// VkDescriptorPoolSize samplerLayoutPoolSize{};
-	// samplerLayoutPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	// samplerLayoutPoolSize.descriptorCount = 1;
-	// poolSizes.push_back(samplerLayoutPoolSize);
-
-
-	// VkDescriptorPoolCreateInfo poolInfo{};
-	// poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	// poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-	// poolInfo.pPoolSizes = poolSizes.data();
-	// poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-	// if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-	// 	throw std::runtime_error("failed to create descriptor pool!");
-	// }
-
-	// //----------- Image sampler stuff -------------
-
-
-	// //----------- Grit UBO stuff -------------
-
-	// std::vector<VkDescriptorPoolSize> dps;
-
-	// dps.emplace_back(VkDescriptorPoolSize{
-	// 	.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	// 	.descriptorCount = 1,
-	// });
-
-	// VkDescriptorPoolCreateInfo dpci = {};
-	// dpci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	// dpci.poolSizeCount = dps.size();
-	// dpci.pPoolSizes = dps.data();
-	// dpci.maxSets = 1; // how many frames are you rendering?
-
-	// VkDescriptorPool dp;
-	// vkCreateDescriptorPool(vklGetDevice(), &dpci, nullptr, &dp);
-
-	// VkBuffer buffer;
-
-	// buffer = vklCreateHostCoherentBufferAndUploadData(&grid, sizeof(grid), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-
-	// VkDescriptorSetAllocateInfo dsai = {};
-	// dsai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	// dsai.descriptorPool = dp;
-	// dsai.descriptorSetCount = 1;
-	// VkDescriptorSetLayout x = vklGetDescriptorLayout(pipeline);
-	// dsai.pSetLayouts = &x;
-
-	// vkAllocateDescriptorSets(vklGetDevice(), &dsai, &ds);
-
-	// VkDescriptorBufferInfo dbi = {}; // multiple buffer infos are permitted
-	// dbi.buffer = buffer;
-	// dbi.offset = 0; // recycling one big buffer is permitted
-	// dbi.range = sizeof(grid);
-
-	// VkWriteDescriptorSet wds = {}; // multiples permitted, also used for uniforms
-	// wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	// wds.dstSet = ds;
-	// wds.descriptorCount = 1;
-	// wds.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	// wds.pBufferInfo = &dbi;
-	// wds.dstBinding = 0;
-	// // number of WDS's
-	// vkUpdateDescriptorSets(vklGetDevice(), 1, &wds, 0, nullptr);
-
-	// //----------- Grit UBO stuff -------------
 }
 
 // Function to update push constants.
@@ -620,8 +517,6 @@ void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling
 }
 
 VkCommandBuffer beginSingleTimeCommands() {
-	auto device = vklGetDevice();
-
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -629,7 +524,7 @@ VkCommandBuffer beginSingleTimeCommands() {
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+    vkAllocateCommandBuffers(vklGetDevice(), &allocInfo, &commandBuffer);
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -641,9 +536,8 @@ VkCommandBuffer beginSingleTimeCommands() {
 }
 
 void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
-    auto device = vklGetDevice();
 	VkQueue graphicsQueue;
-	vkGetDeviceQueue(device, selected_queue_family_index, 0, &graphicsQueue);
+	vkGetDeviceQueue(vklGetDevice(), selected_queue_family_index, 0, &graphicsQueue);
 
 	vkEndCommandBuffer(commandBuffer);
 
@@ -729,8 +623,6 @@ void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayo
 }
 
 void createCommandPool() {
-	// QueueFamilyIndices queueFamilyIndices = findQueueFamilies(vk_physical_device);
-
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -742,7 +634,6 @@ void createCommandPool() {
 }
 
 VkImageView createImageView(VkImage image, VkFormat format) {
-	auto device = vklGetDevice();
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
@@ -755,7 +646,7 @@ VkImageView createImageView(VkImage image, VkFormat format) {
 	viewInfo.subresourceRange.layerCount = 1;
 
 	VkImageView imageView;
-	if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+	if (vkCreateImageView(vklGetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create image view!");
 	}
 
@@ -763,7 +654,6 @@ VkImageView createImageView(VkImage image, VkFormat format) {
 }
 
 void createTextureSampler() {
-	auto device = vklGetDevice();
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(vk_physical_device, &properties);
 
@@ -775,40 +665,13 @@ void createTextureSampler() {
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.anisotropyEnable = VK_FALSE;
-	//samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
-	if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+	if (vkCreateSampler(vklGetDevice(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
-
-// void createDescriptorSetLayout() {
-//         VkDescriptorSetLayoutBinding uboLayoutBinding{};
-//         uboLayoutBinding.binding = 0;
-//         uboLayoutBinding.descriptorCount = 1;
-//         uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-//         uboLayoutBinding.pImmutableSamplers = nullptr;
-//         uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-//         VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-//         samplerLayoutBinding.binding = 1;
-//         samplerLayoutBinding.descriptorCount = 1;
-//         samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-//         samplerLayoutBinding.pImmutableSamplers = nullptr;
-//         samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-//         std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
-//         VkDescriptorSetLayoutCreateInfo layoutInfo{};
-//         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-//         layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-//         layoutInfo.pBindings = bindings.data();
-
-//         if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-//             throw std::runtime_error("failed to create descriptor set layout!");
-//         }
-//     }
