@@ -382,11 +382,18 @@ int main(int argc, char** argv)
 	{
 		auto path = shared::Path::Instantiate();
 
-		std::string modelPath = argc > 1 ? std::string(argv[1]) : shared::Path::Instance->Get("models/chess_bishop/bishop.obj");
+		if(argc != 3){
+			VKL_EXIT_WITH_ERROR("Need to pass obj file and texture file as command line arguments");
+		}
+
+		//std::string modelPath = argc > 1 ? std::string(argv[1]) : shared::Path::Instance->Get("models/chess_bishop/bishop.obj");
+
+		std::string modelPath = std::string(argv[1]);
+		char* texturePath = argv[2];
 
 		// Now create initial geometry and pass it to the GPU
 		// Obj file is expected to be passed as a command line arg
-		objectCreateGeometryAndBuffers(modelPath, window);
+		objectCreateGeometryAndBuffers(modelPath, texturePath, window);
 
 		/* --------------------------------------------- */
 		// Task 1.9:  Implement the Render Loop

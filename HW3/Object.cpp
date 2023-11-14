@@ -66,7 +66,7 @@ extern glm::mat4 orientation;
 // Load geometry data from a specified obj file.
 // Geometry data is assumed to have per-vertex positions, normals and texture corrdinates
 // as well as face indices.
-void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow* window )
+void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char* path_to_tex, GLFWwindow* window )
 {
 	VklGeometryData data = vklLoadModelGeometry( path_to_obj );
 
@@ -148,7 +148,8 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow*
 
 	// START ----- createTextureImage from tutorial
 	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("C:/Users/Harry/Desktop/cpsc453/cpsc-453/assets/models/donut/donut.colour.plain.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	//stbi_uc* pixels = stbi_load("C:/Users/Harry/Desktop/cpsc453/cpsc-453/assets/models/donut/donut.colour.plain.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load(path_to_tex, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 	if (!pixels) {

@@ -40,19 +40,19 @@ void main() {
     // Calculate R locally
     vec3 R = reflect(-L, N);
 
-    // Compute the diffuse and specular components for each fragment
+    // Base color
+    vec4 basecol = texture(texSampler, tex);
     //vec3 basecol = (cboard(tex)) ? colour1 : colour2;
+    //vec3 basecol = vec3(0, 1, 0);
 
-    vec3 basecol = vec3(0, 1, 0);
-    // vec3 diffuse = max(dot(N, L), 0.0) * basecol * perlin;
-    vec3 diffuse = max(dot(N, L), 0.0) * basecol;
 
-    vec3 ambient = ambient_strength * basecol;
-
+    // Compute the diffuse and specular components for each fragment
+    vec3 ambient = ambient_strength * basecol.rgb;
+    vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
     vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
 
     // Write final colour to the framebuffer
-    //colour = vec4((ambient + diffuse + specular)*lightCol, 1.0);
-    colour = texture(texSampler, tex);
+    colour = vec4((ambient + diffuse + specular)*lightCol, basecol.a);
+    //colour = texture(texSampler, tex);
 
 }

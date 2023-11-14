@@ -5,7 +5,7 @@
 #include "VulkanLaunchpad.h"
 #include <string>
 
-void objectCreateGeometryAndBuffers( const std::string& path_to_obj, GLFWwindow* window );
+void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char* path_to_tex, GLFWwindow* window );
 void objectDestroyBuffers();
 void objectDraw();
 
