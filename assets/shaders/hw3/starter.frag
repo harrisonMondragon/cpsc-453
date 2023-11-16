@@ -21,6 +21,16 @@ layout(location = 2) in vec2 tex;	// texture space
 
 layout(binding = 1) uniform sampler2D texSampler;
 
+//push constants block
+layout(push_constant) uniform constants
+{
+	mat4 model;
+	mat4 view;
+	mat4 proj;
+    bool proc;
+    bool ao;
+} pushConstants;
+
 // Procedural texture to generate a checkerboard
 bool cboard( vec2 t ) {
 
@@ -42,11 +52,14 @@ void main() {
 
     // Base color
     vec4 basecol = texture(texSampler, tex);
+    if(pushConstants.proc){
+        basecol = vec4(0,1,0,1);
+    }
     //vec3 basecol = (cboard(tex)) ? colour1 : colour2;
     //vec3 basecol = vec3(0, 1, 0);
 
 
-    // Compute the diffuse and specular components for each fragment
+    // Compute the ambient, diffuse, and specular components for each fragment
     vec3 ambient = ambient_strength * basecol.rgb;
     vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
     vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;

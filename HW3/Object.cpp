@@ -17,6 +17,8 @@ using namespace shared;
 // Variables needed from main
 extern VkPhysicalDevice vk_physical_device;
 extern uint32_t selected_queue_family_index;
+extern bool procedural_texturing;
+extern bool ambient_occlusion;
 
 // buffers that will live on the GPU.
 // No geometry retained on the CPU, all data sent to the GPU.
@@ -50,6 +52,8 @@ struct ObjectPushConstants {
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
+	alignas(4) bool proc;
+	alignas(4) bool ao;
 } pushConstants;
 
 // A structure to hold object bounds
@@ -148,7 +152,6 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 
 	// START ----- createTextureImage from tutorial
 	int texWidth, texHeight, texChannels;
-	//stbi_uc* pixels = stbi_load("C:/Users/Harry/Desktop/cpsc453/cpsc-453/assets/models/donut/donut.colour.plain.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	stbi_uc* pixels = stbi_load(path_to_tex, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
@@ -411,6 +414,9 @@ void objectUpdateConstants( GLFWwindow* window ) {
 	pushConstants.model = glm::scale(glm::mat4(1.0f), glm::vec3{scale, scale, scale} ) *
 			orientation * glm::translate(glm::mat4(1.0f), -center );
 
+	pushConstants.proc = procedural_texturing;
+	pushConstants.ao = ambient_occlusion;
+
 	// fixed camera -> no view matrix update
 
 	// if the window has changed size, update the push constants as well
@@ -418,7 +424,7 @@ void objectUpdateConstants( GLFWwindow* window ) {
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
 
-		pushConstants.proj = vklCreatePerspectiveProjectionMatrix(glm::radians(60.0f), 
+		pushConstants.proj = vklCreatePerspectiveProjectionMatrix(glm::radians(60.0f),
 			static_cast<float>(width) / static_cast<float>(height), ob.radius, 5.0f*ob.radius);
 		}
 

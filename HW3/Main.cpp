@@ -126,6 +126,10 @@ const float DELTA_ANGLE = 0.1f;
 glm::mat4 orientation = glm::mat4(1.0f);
 bool intrinsic = false;
 
+// variables to keep track of texture settings
+bool ambient_occlusion = false;
+bool procedural_texturing = false;
+
 const float MAX_SCALE = 3.0f;
 const float MIN_SCALE = 0.1f;
 float scale = 1.0f;
@@ -450,6 +454,18 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 	if (action == GLFW_PRESS && ((key == GLFW_KEY_I)||(key == GLFW_KEY_SPACE)) ) {
 		intrinsic = !intrinsic;
 		std::cout << "Toggling rotation mode to " << (intrinsic ? "INTRINSIC" : "EXTRINSIC") << std::endl;
+	}
+
+	// Handle texturing mode (Use 'p' to toggle)
+	if (action == GLFW_PRESS && key == GLFW_KEY_P) {
+		procedural_texturing = !procedural_texturing;
+		std::cout << "Toggling texture mode to " << (procedural_texturing ? "PROCEDURAL" : "IMAGE MAPPING") << std::endl;
+	}
+
+	// Handle ambient occlusion (Use 'a' to toggle)
+	if (action == GLFW_PRESS && key == GLFW_KEY_A) {
+		ambient_occlusion = !ambient_occlusion;
+		std::cout << "Toggling ambient occlusion to " << (ambient_occlusion ? "ON" : "OFF") << std::endl;
 	}
 
 	// We mark the window that it should close if ESC is pressed:

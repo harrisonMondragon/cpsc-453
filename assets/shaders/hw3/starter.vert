@@ -15,7 +15,8 @@ layout( push_constant ) uniform constants
 	mat4 model;
 	mat4 view;
 	mat4 proj;
-
+    bool proc;
+    bool ao;
 } pushConstants;
 
 void main() {
