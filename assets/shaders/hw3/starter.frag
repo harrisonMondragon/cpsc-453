@@ -53,6 +53,7 @@ void main() {
     // Base color
     vec4 basecol = texture(texSampler, tex);
     if(pushConstants.proc){
+        // Will change this to use procedural texture sampler then perform the calcs
         basecol = vec4(0,1,0,1);
     }
     //vec3 basecol = (cboard(tex)) ? colour1 : colour2;
@@ -67,5 +68,4 @@ void main() {
     // Write final colour to the framebuffer
     colour = vec4((ambient + diffuse + specular)*lightCol, basecol.a);
     //colour = texture(texSampler, tex);
-
 }

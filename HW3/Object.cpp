@@ -26,14 +26,20 @@ uint32_t mNumObjectIndices;
 VkBuffer mObjectVertexData;
 VkBuffer mObjectIndices;
 
-// Global constants from tutorial
+// Global variables
 VkImageView textureImageView;
 VkSampler textureSampler;
+VkImage textureImage;
+VkDeviceMemory textureImageMemory;
+
+VkImageView aoImageView;
+VkSampler aoSampler;
+VkImage aoImage;
+VkDeviceMemory aoImageMemory;
+
 VkCommandPool commandPool;
 VkDescriptorPool descriptorPool;
 VkDescriptorSetLayout descriptorSetLayout;
-VkImage textureImage;
-VkDeviceMemory textureImageMemory;
 VkDescriptorSet ds;
 
 // A pipeline that can be used for HW2
@@ -151,41 +157,16 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 	// END ----- createCommandPool from tutorial
 
 	// START ----- createTextureImage from tutorial
-	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load(path_to_tex, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-	if (!pixels) {
-		throw std::runtime_error("failed to load texture image!");
-	}
-
-	VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-	void* imageData;
-	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &imageData);
-		memcpy(imageData, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(device, stagingBufferMemory);
-
-	stbi_image_free(pixels);
-
-	createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
-
-	transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-	transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
+	createTextureImageFromFile(path_to_tex, textureImage, textureImageMemory);
 	// END ----- createTextureImage from tutorial
 
 	// START ----- createTextureImageView from tutorial
-	textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+	//textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+	createImageView(textureImage, textureImageView, VK_FORMAT_R8G8B8A8_SRGB);
 	// END ----- createTextureImageView from tutorial
 
 	// START ----- createTextureSampler from tutorial
-	createTextureSampler();
+	createTextureSampler(textureSampler);
 	// END ----- createTextureSampler from tutorial
 
 	// START ----- createDescriptorPool from tutorial
@@ -354,15 +335,6 @@ void objectCreatePipeline() {
 			.offset = offsetof(Vertex, tex),
 		});
 
-		// Image sampler at binding 1
-		config.descriptorLayout.emplace_back(VkDescriptorSetLayoutBinding{
-            .binding = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr,
-        });
-
 		// Push constants should be available in both the vertex and fragment shaders
 		config.pushConstantRanges.emplace_back(VkPushConstantRange{
 			.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT,
@@ -375,28 +347,37 @@ void objectCreatePipeline() {
 		// Bindings vector
 		std::vector<VkDescriptorSetLayoutBinding> bindings;
 
-		// Sampler layout binding
-		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-		samplerLayoutBinding.binding = 1;
-		samplerLayoutBinding.descriptorCount = 1;
-		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
-		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		bindings.push_back(samplerLayoutBinding);
+		// Texture sampler layout at binding 1
+		VkDescriptorSetLayoutBinding textureSamplerLayoutBinding{};
+		textureSamplerLayoutBinding.binding = 1;
+		textureSamplerLayoutBinding.descriptorCount = 1;
+		textureSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		textureSamplerLayoutBinding.pImmutableSamplers = nullptr;
+		textureSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		bindings.push_back(textureSamplerLayoutBinding);
 
-	VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
+		// // Ambient occlusion sampler layout at binding 2
+		// VkDescriptorSetLayoutBinding aoSamplerLayoutBinding{};
+		// aoSamplerLayoutBinding.binding = 2;
+		// aoSamplerLayoutBinding.descriptorCount = 1;
+		// aoSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		// aoSamplerLayoutBinding.pImmutableSamplers = nullptr;
+		// aoSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		// bindings.push_back(aoSamplerLayoutBinding);
 
-	if (vkCreateDescriptorSetLayout(vklGetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor set layout!");
-	}
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
 
-	// Attach bindings to config
-	config.descriptorLayout = bindings;
+		if (vkCreateDescriptorSetLayout(vklGetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create descriptor set layout!");
+		}
 
-	// END ----- createDescriptorSetLayout from tutorial
+		// Attach bindings to config
+		config.descriptorLayout = bindings;
+
+		// END ----- createDescriptorSetLayout from tutorial
 
 	// Actually create the pipeline using the config
 	pipeline = vklCreateGraphicsPipeline(config);
@@ -640,7 +621,7 @@ void createCommandPool() {
 	}
 }
 
-VkImageView createImageView(VkImage image, VkFormat format) {
+void createImageView(VkImage& image, VkImageView &imageView, VkFormat format) {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
@@ -652,15 +633,12 @@ VkImageView createImageView(VkImage image, VkFormat format) {
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
-	VkImageView imageView;
 	if (vkCreateImageView(vklGetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create image view!");
 	}
-
-	return imageView;
 }
 
-void createTextureSampler() {
+void createTextureSampler(VkSampler& sampler) {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(vk_physical_device, &properties);
 
@@ -678,7 +656,38 @@ void createTextureSampler() {
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
-	if (vkCreateSampler(vklGetDevice(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+	if (vkCreateSampler(vklGetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
+}
+
+void createTextureImageFromFile(const char* path_to_tex, VkImage& image, VkDeviceMemory& imageMemory){
+	VkDevice device = vklGetDevice();
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load(path_to_tex, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+	if (!pixels) {
+		throw std::runtime_error("failed to load texture image!");
+	}
+
+	VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* imageData;
+	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &imageData);
+		memcpy(imageData, pixels, static_cast<size_t>(imageSize));
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	stbi_image_free(pixels);
+
+	createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+
+	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+    vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
