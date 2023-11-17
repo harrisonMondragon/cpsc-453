@@ -21,6 +21,7 @@ layout(location = 2) in vec2 tex;	// texture space
 
 layout(binding = 1) uniform sampler2D texSampler;
 layout(binding = 2) uniform sampler2D aoSampler;
+layout(binding = 3) uniform sampler2D procSampler;
 
 //push constants block
 layout(push_constant) uniform constants
@@ -53,25 +54,20 @@ void main() {
 
     // Base color
     vec4 basecol = texture(texSampler, tex);
-
     //vec4 aocol = texture(aoSampler, tex);
 
     if(pushConstants.proc){
-        // Will change this to use procedural texture sampler then perform the calcs
-        basecol = vec4(0,1,0,1);
+        //float ahh = texture(procSampler, tex);
+        vec4 proccol = texture(procSampler, tex);
     }
 
-    // float ao_value = 0;
     float ao_value = 1;
     if(pushConstants.ao){
-        // CHECK WITH TA IF THIS IS RIGHT
         ao_value = texture(aoSampler, tex).r;
     }
 
     // Compute the ambient, diffuse, and specular components for each fragment
-    //vec3 ambient = ambient_strength * (1 - ao_value) * basecol.rgb;
     vec3 ambient = ambient_strength * ao_value * basecol.rgb;
-
     vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
     vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
 

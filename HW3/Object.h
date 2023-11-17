@@ -33,3 +33,6 @@ void createCommandPool();
 void createImageView(VkImage& image, VkImageView& imageView, VkFormat format);
 void createTextureSampler(VkSampler& sampler);
 void createTextureImageFromFile(const char* path_to_tex, VkImage& image, VkDeviceMemory& imageMemory);
+
+void createImageProcedural(uint32_t sideLength, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+void createTextureImageProcedural(VkImage& image, VkDeviceMemory& imageMemory);

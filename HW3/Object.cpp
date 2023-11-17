@@ -8,6 +8,7 @@
 #include <glm/gtx/normal.hpp>
 #include "Camera.h"
 #include "Path.hpp"
+#include <random>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -36,6 +37,11 @@ VkImageView aoImageView;
 VkSampler aoSampler;
 VkImage aoImage;
 VkDeviceMemory aoImageMemory;
+
+VkImageView proceduralImageView;
+VkSampler proceduralSampler;
+VkImage proceduralImage;
+VkDeviceMemory proceduralImageMemory;
 
 VkCommandPool commandPool;
 VkDescriptorPool descriptorPool;
@@ -159,16 +165,19 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 	// START ----- createTextureImage from tutorial
 	createTextureImageFromFile(path_to_tex, textureImage, textureImageMemory);
 	createTextureImageFromFile(path_to_ao, aoImage, aoImageMemory);
+	createTextureImageProcedural(proceduralImage, proceduralImageMemory);
 	// END ----- createTextureImage from tutorial
 
 	// START ----- createTextureImageView from tutorial
 	createImageView(textureImage, textureImageView, VK_FORMAT_R8G8B8A8_SRGB);
 	createImageView(aoImage, aoImageView, VK_FORMAT_R8G8B8A8_SRGB);
+	createImageView(proceduralImage, proceduralImageView, VK_FORMAT_R32_SFLOAT);
 	// END ----- createTextureImageView from tutorial
 
 	// START ----- createTextureSampler from tutorial
 	createTextureSampler(textureSampler);
 	createTextureSampler(aoSampler);
+	createTextureSampler(proceduralSampler);
 	// END ----- createTextureSampler from tutorial
 
 	// START ----- createDescriptorPool from tutorial
@@ -185,6 +194,11 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 	aoSamplerLayoutPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	aoSamplerLayoutPoolSize.descriptorCount = 1;
 	poolSizes.push_back(aoSamplerLayoutPoolSize);
+
+	VkDescriptorPoolSize proceduralSamplerLayoutPoolSize{};
+	proceduralSamplerLayoutPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	proceduralSamplerLayoutPoolSize.descriptorCount = 1;
+	poolSizes.push_back(proceduralSamplerLayoutPoolSize);
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -218,6 +232,11 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 	aoImageInfo.imageView = aoImageView;
 	aoImageInfo.sampler = aoSampler;
 
+	VkDescriptorImageInfo proceduralImageInfo{};
+	proceduralImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	proceduralImageInfo.imageView = proceduralImageView;
+	proceduralImageInfo.sampler = proceduralSampler;
+
 	// write descriptor set vector
 	std::vector<VkWriteDescriptorSet> wds;
 
@@ -239,7 +258,16 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 	aoWds.pImageInfo = &aoImageInfo;
 	wds.push_back(aoWds);
 
-	vkUpdateDescriptorSets(vklGetDevice(), 2, wds.data(), 0, nullptr);
+	VkWriteDescriptorSet procWds = {}; // multiples permitted, also used for uniforms
+	procWds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	procWds.dstSet = ds;
+	procWds.dstBinding = 3;
+	procWds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	procWds.descriptorCount = 1;
+	procWds.pImageInfo = &proceduralImageInfo;
+	wds.push_back(procWds);
+
+	vkUpdateDescriptorSets(vklGetDevice(), 3, wds.data(), 0, nullptr);
 	// END ----- createDescriptorSets from tutorial
 }
 
@@ -397,6 +425,15 @@ void objectCreatePipeline() {
 		aoSamplerLayoutBinding.pImmutableSamplers = nullptr;
 		aoSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		bindings.push_back(aoSamplerLayoutBinding);
+
+		// Procedural sampler layout at binding 3
+		VkDescriptorSetLayoutBinding proceduralSamplerLayoutBinding{};
+		proceduralSamplerLayoutBinding.binding = 3;
+		proceduralSamplerLayoutBinding.descriptorCount = 1;
+		proceduralSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		proceduralSamplerLayoutBinding.pImmutableSamplers = nullptr;
+		proceduralSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		bindings.push_back(proceduralSamplerLayoutBinding);
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -596,6 +633,7 @@ void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t 
 	endSingleTimeCommands(commandBuffer);
 }
 
+// Format isn't used here??
 void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -724,3 +762,80 @@ void createTextureImageFromFile(const char* path_to_tex, VkImage& image, VkDevic
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
+
+void createTextureImageProcedural(VkImage& image, VkDeviceMemory& imageMemory){
+	VkDevice device = vklGetDevice();
+
+	std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dist(1, 100);  // Adjust the range as needed
+
+    // Create an array of length 256 and fill it with random integers
+    int randomArray[256];
+    for (int i = 0; i < 256; ++i) {
+        randomArray[i] = dist(mt);
+    }
+	uint32_t procedralSideLength = 16;
+	size_t imageSize = sizeof(randomArray[0]) * procedralSideLength * procedralSideLength;
+
+	VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* imageData;
+	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &imageData);
+		memcpy(imageData, randomArray, static_cast<size_t>(imageSize));
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	createImage(procedralSideLength, procedralSideLength, VK_FORMAT_R32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+
+	transitionImageLayout(image, VK_FORMAT_R32_SFLOAT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	  copyBufferToImage(stagingBuffer, image, procedralSideLength, procedralSideLength);
+	transitionImageLayout(image, VK_FORMAT_R32_SFLOAT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	// createImageProcedural(procedralSideLength, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+
+	// transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	// 	copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(procedralSideLength), static_cast<uint32_t>(procedralSideLength));
+	// transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+    vkFreeMemory(device, stagingBufferMemory, nullptr);
+}
+
+// void createImageProcedural(uint32_t sideLength, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+//     auto device = vklGetDevice();
+
+// 	VkImageCreateInfo imageInfo{};
+//     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+//     imageInfo.imageType = VK_IMAGE_TYPE_2D;
+//     imageInfo.extent.width = sideLength;
+//     imageInfo.extent.height = sideLength;
+//     imageInfo.extent.depth = 1;
+//     imageInfo.mipLevels = 1;
+//     imageInfo.arrayLayers = 1;
+//     imageInfo.format = format;
+//     imageInfo.tiling = tiling;
+//     imageInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+//     imageInfo.usage = usage;
+//     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+//     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+//     if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+//         throw std::runtime_error("failed to create image!");
+//     }
+
+//     VkMemoryRequirements memRequirements;
+//     vkGetImageMemoryRequirements(device, image, &memRequirements);
+
+//     VkMemoryAllocateInfo allocInfo{};
+//     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+//     allocInfo.allocationSize = memRequirements.size;
+//     allocInfo.memoryTypeIndex = getMemoryType(memRequirements.memoryTypeBits, properties);
+
+//     if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+//         throw std::runtime_error("failed to allocate image memory!");
+//     }
+
+//     vkBindImageMemory(device, image, imageMemory, 0);
+// }
