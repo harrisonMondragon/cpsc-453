@@ -60,19 +60,17 @@ void main() {
         basecol = vec4(0,1,0,1);
     }
 
+    float ao_value = 0;
     if(pushConstants.ao){
-        basecol = aocol;
+        // CHECK WITH TA IF THIS IS RIGHT
+        ao_value = texture(aoSampler, tex).r;
     }
-    //vec3 basecol = (cboard(tex)) ? colour1 : colour2;
-    //vec3 basecol = vec3(0, 1, 0);
-
 
     // Compute the ambient, diffuse, and specular components for each fragment
-    vec3 ambient = ambient_strength * basecol.rgb;
+    vec3 ambient = ambient_strength * (1 - ao_value) * basecol.rgb;
     vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
     vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
 
     // Write final colour to the framebuffer
     colour = vec4((ambient + diffuse + specular)*lightCol, basecol.a);
-    //colour = texture(texSampler, tex);
 }
