@@ -20,6 +20,7 @@ layout(location = 1) in vec3 viewDir;	// view space vector
 layout(location = 2) in vec2 tex;	// texture space
 
 layout(binding = 1) uniform sampler2D texSampler;
+layout(binding = 2) uniform sampler2D aoSampler;
 
 //push constants block
 layout(push_constant) uniform constants
@@ -50,11 +51,17 @@ void main() {
     // Calculate R locally
     vec3 R = reflect(-L, N);
 
-    // Base color
+    // Base color and ao color
     vec4 basecol = texture(texSampler, tex);
+    vec4 aocol = texture(aoSampler, tex);
+
     if(pushConstants.proc){
         // Will change this to use procedural texture sampler then perform the calcs
         basecol = vec4(0,1,0,1);
+    }
+
+    if(pushConstants.ao){
+        basecol = aocol;
     }
     //vec3 basecol = (cboard(tex)) ? colour1 : colour2;
     //vec3 basecol = vec3(0, 1, 0);

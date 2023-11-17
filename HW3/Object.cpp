@@ -76,7 +76,7 @@ extern glm::mat4 orientation;
 // Load geometry data from a specified obj file.
 // Geometry data is assumed to have per-vertex positions, normals and texture corrdinates
 // as well as face indices.
-void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char* path_to_tex, GLFWwindow* window )
+void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char* path_to_tex, const char* path_to_ao, GLFWwindow* window )
 {
 	VklGeometryData data = vklLoadModelGeometry( path_to_obj );
 
@@ -158,24 +158,33 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 
 	// START ----- createTextureImage from tutorial
 	createTextureImageFromFile(path_to_tex, textureImage, textureImageMemory);
+	createTextureImageFromFile(path_to_ao, aoImage, aoImageMemory);
 	// END ----- createTextureImage from tutorial
 
 	// START ----- createTextureImageView from tutorial
-	//textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
 	createImageView(textureImage, textureImageView, VK_FORMAT_R8G8B8A8_SRGB);
+	createImageView(aoImage, aoImageView, VK_FORMAT_R8G8B8A8_SRGB);
 	// END ----- createTextureImageView from tutorial
 
 	// START ----- createTextureSampler from tutorial
 	createTextureSampler(textureSampler);
+	createTextureSampler(aoSampler);
 	// END ----- createTextureSampler from tutorial
 
 	// START ----- createDescriptorPool from tutorial
+
+	// poolsizes vector
 	std::vector<VkDescriptorPoolSize> poolSizes;
 
-	VkDescriptorPoolSize samplerLayoutPoolSize{};
-	samplerLayoutPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutPoolSize.descriptorCount = 1;
-	poolSizes.push_back(samplerLayoutPoolSize);
+	VkDescriptorPoolSize textureSamplerLayoutPoolSize{};
+	textureSamplerLayoutPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	textureSamplerLayoutPoolSize.descriptorCount = 1;
+	poolSizes.push_back(textureSamplerLayoutPoolSize);
+
+	VkDescriptorPoolSize aoSamplerLayoutPoolSize{};
+	aoSamplerLayoutPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	aoSamplerLayoutPoolSize.descriptorCount = 1;
+	poolSizes.push_back(aoSamplerLayoutPoolSize);
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -199,20 +208,38 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 		throw std::runtime_error("failed to allocate descriptor set!");
 	}
 
-	VkDescriptorImageInfo imageInfo{};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = textureImageView;
-	imageInfo.sampler = textureSampler;
+	VkDescriptorImageInfo textureImageInfo{};
+	textureImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	textureImageInfo.imageView = textureImageView;
+	textureImageInfo.sampler = textureSampler;
 
-	VkWriteDescriptorSet wds = {}; // multiples permitted, also used for uniforms
-	wds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	wds.dstSet = ds;
-	wds.dstBinding = 1;
-	wds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	wds.descriptorCount = 1;
-	wds.pImageInfo = &imageInfo;
+	VkDescriptorImageInfo aoImageInfo{};
+	aoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	aoImageInfo.imageView = aoImageView;
+	aoImageInfo.sampler = aoSampler;
 
-	vkUpdateDescriptorSets(vklGetDevice(), 1, &wds, 0, nullptr);
+	// write descriptor set vector
+	std::vector<VkWriteDescriptorSet> wds;
+
+	VkWriteDescriptorSet textureWds = {}; // multiples permitted, also used for uniforms
+	textureWds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	textureWds.dstSet = ds;
+	textureWds.dstBinding = 1;
+	textureWds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	textureWds.descriptorCount = 1;
+	textureWds.pImageInfo = &textureImageInfo;
+	wds.push_back(textureWds);
+
+	VkWriteDescriptorSet aoWds = {}; // multiples permitted, also used for uniforms
+	aoWds.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	aoWds.dstSet = ds;
+	aoWds.dstBinding = 2;
+	aoWds.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	aoWds.descriptorCount = 1;
+	aoWds.pImageInfo = &aoImageInfo;
+	wds.push_back(aoWds);
+
+	vkUpdateDescriptorSets(vklGetDevice(), 2, wds.data(), 0, nullptr);
 	// END ----- createDescriptorSets from tutorial
 }
 
@@ -224,10 +251,16 @@ void objectDestroyBuffers() {
 	vklDestroyGraphicsPipeline(pipeline);
 	vklDestroyHostCoherentBufferAndItsBackingMemory( mObjectVertexData );
 	vklDestroyHostCoherentBufferAndItsBackingMemory( mObjectIndices );
+
 	vkDestroyImage(device, textureImage, nullptr);
     vkFreeMemory(device, textureImageMemory, nullptr);
 	vkDestroySampler(device, textureSampler, nullptr);
 	vkDestroyImageView(device, textureImageView, nullptr);
+
+	vkDestroyImage(device, aoImage, nullptr);
+    vkFreeMemory(device, aoImageMemory, nullptr);
+	vkDestroySampler(device, aoSampler, nullptr);
+	vkDestroyImageView(device, aoImageView, nullptr);
 }
 
 void objectDraw() {
@@ -356,14 +389,14 @@ void objectCreatePipeline() {
 		textureSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		bindings.push_back(textureSamplerLayoutBinding);
 
-		// // Ambient occlusion sampler layout at binding 2
-		// VkDescriptorSetLayoutBinding aoSamplerLayoutBinding{};
-		// aoSamplerLayoutBinding.binding = 2;
-		// aoSamplerLayoutBinding.descriptorCount = 1;
-		// aoSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		// aoSamplerLayoutBinding.pImmutableSamplers = nullptr;
-		// aoSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		// bindings.push_back(aoSamplerLayoutBinding);
+		// Ambient occlusion sampler layout at binding 2
+		VkDescriptorSetLayoutBinding aoSamplerLayoutBinding{};
+		aoSamplerLayoutBinding.binding = 2;
+		aoSamplerLayoutBinding.descriptorCount = 1;
+		aoSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		aoSamplerLayoutBinding.pImmutableSamplers = nullptr;
+		aoSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		bindings.push_back(aoSamplerLayoutBinding);
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
