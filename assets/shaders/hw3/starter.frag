@@ -42,6 +42,29 @@ bool cboard( vec2 t ) {
     return ((x + y) % 2 == 0);
 }
 
+float Noise(vec2 interp){
+    return texture(procSampler, interp).r;
+}
+
+float T(vec2 tex_coords){
+    float turb = 0.0;
+    for(int i = 0; i <= 4; i++){
+        turb += ((Noise(pow(2,i)*tex_coords))/(pow(2,i)));
+    }
+
+    return turb;
+}
+
+float S(vec2 tex_coords){
+    float u = tex_coords.x;
+    float v = tex_coords.y;
+
+    float m = 48.0;
+    float sin_input = m * radians(180.0) * (u+v+(T(tex_coords)));
+
+    return (0.5 * (1.0+sin(sin_input)));
+}
+
 void main() {
 
     // Normalize N, L and V vectors
@@ -54,20 +77,24 @@ void main() {
 
     // Base color
     vec4 basecol = texture(texSampler, tex);
-    //vec4 aocol = texture(aoSampler, tex);
 
+    // float perlin = 1.0;
     if(pushConstants.proc){
+        float perlin = S(tex);
+        basecol = vec4(vec3(perlin), 1.0);
+        //basecol = texture(procSampler, tex);
         //float ahh = texture(procSampler, tex);
-        vec4 proccol = texture(procSampler, tex);
+        //vec4 proccol = texture(procSampler, tex);
     }
 
-    float ao_value = 1;
+    float ao_value = 1.0;
     if(pushConstants.ao){
         ao_value = texture(aoSampler, tex).r;
     }
 
     // Compute the ambient, diffuse, and specular components for each fragment
     vec3 ambient = ambient_strength * ao_value * basecol.rgb;
+    // vec3 diffuse = max(dot(N, L), 0.0) * perlin * basecol.rgb;
     vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
     vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
 
