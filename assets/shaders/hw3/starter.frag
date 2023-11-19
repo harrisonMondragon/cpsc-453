@@ -33,15 +33,6 @@ layout(push_constant) uniform constants
     bool ao;
 } pushConstants;
 
-// Procedural texture to generate a checkerboard
-bool cboard( vec2 t ) {
-
-    int NUM_CHECKS = 64;
-    int x = int(t.x * NUM_CHECKS);
-    int y = int(t.y * NUM_CHECKS);
-    return ((x + y) % 2 == 0);
-}
-
 float Noise(vec2 interp){
     return texture(procSampler, interp).r;
 }
@@ -59,7 +50,7 @@ float S(vec2 tex_coords){
     float u = tex_coords.x;
     float v = tex_coords.y;
 
-    float m = 48.0;
+    float m = 96.0;
     float sin_input = m * radians(180.0) * (u+v+(T(tex_coords)));
 
     return (0.5 * (1.0+sin(sin_input)));
@@ -82,9 +73,6 @@ void main() {
     if(pushConstants.proc){
         float perlin = S(tex);
         basecol = vec4(vec3(perlin), 1.0);
-        //basecol = texture(procSampler, tex);
-        //float ahh = texture(procSampler, tex);
-        //vec4 proccol = texture(procSampler, tex);
     }
 
     float ao_value = 1.0;
@@ -94,7 +82,6 @@ void main() {
 
     // Compute the ambient, diffuse, and specular components for each fragment
     vec3 ambient = ambient_strength * ao_value * basecol.rgb;
-    // vec3 diffuse = max(dot(N, L), 0.0) * perlin * basecol.rgb;
     vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
     vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
 

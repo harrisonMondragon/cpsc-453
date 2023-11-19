@@ -171,7 +171,9 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 	// START ----- createTextureImageView from tutorial
 	createImageView(textureImage, textureImageView, VK_FORMAT_R8G8B8A8_SRGB);
 	createImageView(aoImage, aoImageView, VK_FORMAT_R8G8B8A8_SRGB);
-	createImageView(proceduralImage, proceduralImageView, VK_FORMAT_R32_SFLOAT);
+	// createImageView(proceduralImage, proceduralImageView, VK_FORMAT_R32_SFLOAT);
+	createImageView(proceduralImage, proceduralImageView, VK_FORMAT_R8G8B8A8_SRGB);
+
 	// END ----- createTextureImageView from tutorial
 
 	// START ----- createTextureSampler from tutorial
@@ -787,17 +789,11 @@ void createTextureImageProcedural(VkImage& image, VkDeviceMemory& imageMemory){
 		memcpy(imageData, randomArray, static_cast<size_t>(imageSize));
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	createImage(procedralSideLength, procedralSideLength, VK_FORMAT_R32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+	createImage(procedralSideLength, procedralSideLength, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 
-	transitionImageLayout(image, VK_FORMAT_R32_SFLOAT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	  copyBufferToImage(stagingBuffer, image, procedralSideLength, procedralSideLength);
-	transitionImageLayout(image, VK_FORMAT_R32_SFLOAT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	// createImageProcedural(procedralSideLength, VK_FORMAT_R8_UNORM, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
-
-	// transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	// 	copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(procedralSideLength), static_cast<uint32_t>(procedralSideLength));
-	// transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
