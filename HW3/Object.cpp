@@ -291,6 +291,15 @@ void objectDestroyBuffers() {
     vkFreeMemory(device, aoImageMemory, nullptr);
 	vkDestroySampler(device, aoSampler, nullptr);
 	vkDestroyImageView(device, aoImageView, nullptr);
+
+	vkDestroyImage(device, proceduralImage, nullptr);
+    vkFreeMemory(device, proceduralImageMemory, nullptr);
+	vkDestroySampler(device, proceduralSampler, nullptr);
+	vkDestroyImageView(device, proceduralImageView, nullptr);
+
+	vkDestroyCommandPool(device, commandPool, nullptr);
+	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 }
 
 void objectDraw() {
@@ -346,8 +355,8 @@ void objectCreatePipeline() {
 	// Pipeline creation
 	// ------------------------------
 
-	auto const vertShaderPath = Path::Instance->Get("shaders/hW3/starter.vert");
-	auto const fragShaderPath = Path::Instance->Get("shaders/hW3/starter.frag");
+	auto const vertShaderPath = Path::Instance->Get("shaders/hw3/starter.vert");
+	auto const fragShaderPath = Path::Instance->Get("shaders/hw3/starter.frag");
 
 	VklGraphicsPipelineConfig config{};
 		config.enableAlphaBlending = false;
