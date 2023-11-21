@@ -31,7 +31,7 @@ endif()
 # VulkanLaunchpad (dependency)   #
 #=======================================#
 
-set(PROJECT_NAME StarterDemo)
+set(PROJECT_NAME HW4Starter)
 # Working directory
 add_compile_definitions("ASSET_DIR=${CMAKE_SOURCE_DIR}/assets")
 
@@ -55,8 +55,7 @@ link_libraries(Shared)
 
 ### Executables###########################################
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/BufferExample")
-add_subdirectory("${CMAKE_SOURCE_DIR}/HW3")
+add_subdirectory("${CMAKE_SOURCE_DIR}/HW4")
 
 #================================#
 # IDE specific setup              #

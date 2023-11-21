@@ -1,4 +1,4 @@
-# 453VulkanStarter
+# 453HW2Starter
 
 This repository contains starter code that you can use for homework assignments in CPSC 453 (Introduction to Computer Graphics) at the University of Calgary.
 
@@ -6,7 +6,7 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 
 ## Setup
 
-1. Clone this repository using the ```https``` address.
+1. Clone this repository using the ```https``` address and switch to the `HW2` branch. 
     ```
     git clone <https address>
     ```
@@ -14,7 +14,7 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
     ```
     mkdir build
     ```
-3. Use the cmake to generate the necessary files for compiling the project. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter` to setup your IDE and build environment. For this step, you can either use cmake-gui or run the cmake command directly in the terminal:
+3. Use cmake to generate the necessary files for compiling the project. Please review the [Setup Instructions](https://github.com/cg-tuwien/VulkanLaunchpad#setup-instructions) for `VulkanLaunchpadStarter`` to setup your IDE and build environment. For this step, you can either use cmake-gui or run the cmake command directly in the terminal:
     ```
     cd build
     cmake ..
@@ -27,7 +27,7 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 
 ## Troubleshooting
 
-- Make sure that Vulkan sdk is installed correctly. You can verify this by running the vkCube application. (Installed automatically when you install Vulkan sdk)
+- Make sure that Vulkan SDK is installed correctly. You can verify this by running the vkCube application. (Installed automatically when you install Vulkan SDK)
 
 - For Linux, you need to install build-essentials.
 
@@ -37,31 +37,9 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 
 ## Available Examples and Skeletons
 
-This repository consists of the following:
+This branch consists of the following:
+- `/HW4`:
 
-- `/HW3`:
-
-  Code that you can use as starter code for HW3. The code implements most of the required functionality from HW2. HW3 relies on models that come with normals, so the code does not compute normals.
-  Additionally, given an OBJ model with texture coordinates (specified as a command-line argument), it shows how to augment Phong shading with a checkerboard texture procedurally generated in the fragment shader.
-
-  Rotation and Scaling controls are as follows:
-  - Use the `RIGHT` and `LEFT` cursor keys to rotate about the $x$ axis. 
-  - Use the `UP` and `DOWN` cursor keys to rotate about the $y$ axis.
-  - Use the `x` and `z` keys to rotate about the $z$ axis.
-  - Press `i` or `spacebar` to toggle between intrinsic and extrinsic rotation modes.
-  - Use the `=` and `-` keys to scale up and down. 
-
-  <br>
- 
-  Shader hot reloading is also supported.
-  - Press `F5` to hot-reload shaders.
-  
-  <br>
-
- - Press `Enter` to reset the transformations on the models 
-
-<br>
-
-  Several OBJ models are provided under `/HW3/models` for testing purposes.
-
-- `ImGui` has been integrated into this branch. See `BufferExample` on how to use it if you wish you incorporate it in `HW3`. 
+  Starter code for HW4 which is a functioning example that 
+  renders a full screen quad and uses it to generate rays for 
+  ray tracing in the fragment shader. A fragment shader is provided that intersects rays with a unit sphere located at the origin. An arcball camera is integrated so that the user can move the camera around the ray-traced sphere using the mouse. Texture setup code is also provided and a sample texture is mapped to the ray-traced sphere.
