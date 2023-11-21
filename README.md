@@ -1,4 +1,4 @@
-# 453HW2Starter
+# 453HW4Starter
 
 This repository contains starter code that you can use for homework assignments in CPSC 453 (Introduction to Computer Graphics) at the University of Calgary.
 
@@ -6,7 +6,7 @@ It is based on the [VulkanLaunchpadStarter](https://github.com/cg-tuwien/VulkanL
 
 ## Setup
 
-1. Clone this repository using the ```https``` address and switch to the `HW2` branch. 
+1. Clone this repository using the ```https``` address and switch to the `HW4` branch. 
     ```
     git clone <https address>
     ```
@@ -43,3 +43,6 @@ This branch consists of the following:
   Starter code for HW4 which is a functioning example that 
   renders a full screen quad and uses it to generate rays for 
   ray tracing in the fragment shader. A fragment shader is provided that intersects rays with a unit sphere located at the origin. An arcball camera is integrated so that the user can move the camera around the ray-traced sphere using the mouse. Texture setup code is also provided and a sample texture is mapped to the ray-traced sphere.
+
+  Shader hot-reloaing is supported via `F5`.
+  
