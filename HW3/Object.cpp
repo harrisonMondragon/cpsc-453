@@ -5,7 +5,7 @@
 /*
  * This code heavily references the following tutorial:
  * https://vulkan-tutorial.com/Texture_mapping/Images
- * 
+ *
  * The github for the tutorial can be found at:
  * https://github.com/Overv/VulkanTutorial
  */
@@ -179,7 +179,6 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 	// START ----- createTextureImageView from tutorial
 	createImageView(textureImage, textureImageView, VK_FORMAT_R8G8B8A8_SRGB);
 	createImageView(aoImage, aoImageView, VK_FORMAT_R8G8B8A8_SRGB);
-	// createImageView(proceduralImage, proceduralImageView, VK_FORMAT_R32_SFLOAT);
 	createImageView(proceduralImage, proceduralImageView, VK_FORMAT_R8G8B8A8_SRGB);
 
 	// END ----- createTextureImageView from tutorial
@@ -282,7 +281,7 @@ void objectCreateGeometryAndBuffers( const std::string& path_to_obj, const char*
 }
 
 
-// Cleanup buffers and pipeline created on the GPU
+// Cleanup buffers and pipeline created on the GPU. Also destroy global variables
 void objectDestroyBuffers() {
 	auto device = vklGetDevice();
 	vkDeviceWaitIdle( device );
@@ -528,6 +527,7 @@ uint32_t getMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
+// Create a VKBuffer
 void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
     auto device = vklGetDevice();
 
@@ -556,6 +556,7 @@ void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyF
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
+// Create a VKImage
 void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
     auto device = vklGetDevice();
 
@@ -593,6 +594,7 @@ void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling
     vkBindImageMemory(device, image, imageMemory, 0);
 }
 
+// Begin the command buffer
 VkCommandBuffer beginSingleTimeCommands() {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -612,6 +614,7 @@ VkCommandBuffer beginSingleTimeCommands() {
     return commandBuffer;
 }
 
+// End the command buffer
 void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 	VkQueue graphicsQueue;
 	vkGetDeviceQueue(vklGetDevice(), selected_queue_family_index, 0, &graphicsQueue);
@@ -629,6 +632,7 @@ void endSingleTimeCommands(VkCommandBuffer commandBuffer) {
     vkFreeCommandBuffers(vklGetDevice(), commandPool, 1, &commandBuffer);
 }
 
+// Copy VKBuffer to a VKImage
 void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -652,7 +656,7 @@ void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t 
 	endSingleTimeCommands(commandBuffer);
 }
 
-// Format isn't used here??
+// Transition a VKImage between VKImageLayouts
 void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -700,6 +704,7 @@ void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayo
 	endSingleTimeCommands(commandBuffer);
 }
 
+// Create a VKCommandPool
 void createCommandPool() {
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -711,6 +716,7 @@ void createCommandPool() {
 	}
 }
 
+// Create a VKImageView from a VKImage
 void createImageView(VkImage& image, VkImageView &imageView, VkFormat format) {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -728,6 +734,7 @@ void createImageView(VkImage& image, VkImageView &imageView, VkFormat format) {
 	}
 }
 
+// Create a VKSampler
 void createTextureSampler(VkSampler& sampler) {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(vk_physical_device, &properties);
@@ -751,6 +758,7 @@ void createTextureSampler(VkSampler& sampler) {
 	}
 }
 
+// Create a VKImage from a texture in a file
 void createTextureImageFromFile(const char* path_to_tex, VkImage& image, VkDeviceMemory& imageMemory){
 	VkDevice device = vklGetDevice();
 	int texWidth, texHeight, texChannels;
@@ -782,6 +790,7 @@ void createTextureImageFromFile(const char* path_to_tex, VkImage& image, VkDevic
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
+// Create a procedurally generated VKImage
 void createTextureImageProcedural(VkImage& image, VkDeviceMemory& imageMemory){
 	VkDevice device = vklGetDevice();
 
