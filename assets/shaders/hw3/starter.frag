@@ -1,3 +1,11 @@
+/*
+ * This code heavily references the following tutorial:
+ * https://vulkan-tutorial.com/Texture_mapping/Images
+ * 
+ * The github for the tutorial can be found at:
+ * https://github.com/Overv/VulkanTutorial
+ */
+
 #version 450
 
 // global constants

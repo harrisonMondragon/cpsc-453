@@ -2,6 +2,14 @@
  * Copyright 2023 University of Calgary, Visualization and Graphics Group
  */
 
+/*
+ * This code heavily references the following tutorial:
+ * https://vulkan-tutorial.com/Texture_mapping/Images
+ * 
+ * The github for the tutorial can be found at:
+ * https://github.com/Overv/VulkanTutorial
+ */
+
 #include "Object.h"
 #include <VulkanLaunchpad.h>
 #include <vulkan/vulkan.hpp>
