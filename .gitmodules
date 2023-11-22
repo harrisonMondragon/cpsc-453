@@ -1,0 +1,3 @@
+[submodule "VulkanLaunchpadFix"]
+	path = VulkanLaunchpadFix
+	url = https://csgit.ucalgary.ca/hhornbec/VulkanLaunchpadFix
