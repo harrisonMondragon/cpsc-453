@@ -59,9 +59,9 @@ void main() {
             float phi = acos(normal.z);
             float theta;
             if(abs(normal.x) < 0.001) {
-                theta = sign(normal.y)*PI*0.5; // flip for Vulkan
+                theta = sign(normal.y)*PI*0.5; 
             } else {
-                theta = atan(normal.y, normal.x); // flip for Vulkan
+                theta = atan(normal.y, normal.x); 
             }
             // normalize coordinates for texture sampling. 
             // Top-left of texture is (0,0) in Vulkan, so we can stick to spherical coordinates
