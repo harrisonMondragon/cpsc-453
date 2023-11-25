@@ -23,7 +23,15 @@ It is based on based on [VulkanLaunchpad](https://github.com/cg-tuwien/VulkanLau
     ```
     source /home/share/gfx/vulkanSDK/1.3.261.1/setup-env.sh
     ```
-5. You can now compile and run your project.
+5. You can now compile and run your project. In most cases, this is as simple as:
+    ```
+    make -j
+    HW4/HW4
+    ```
+
+The main executable takes only one optional argument on the command line: the path to the assets it needs.
+  This only needs to be invoked if the program is somehow unable to find the assets directory, which is unlikely to occur 
+  during normal development.
 
 ## Troubleshooting
 
