@@ -1,6 +1,7 @@
 #version 450
 
 #define PI 3.1415926535897932384626433832795
+#define MAX_TEXTURES 4		// save some space in the push constants by hard-wiring this
 
 layout(location = 0) out vec4 color;
 
@@ -11,13 +12,13 @@ layout(location = 1) in vec3 d;
 //push constants block
 layout( push_constant ) uniform constants
 {
-	mat4 model; // currently unused
 	mat4 invView; // camera-to-world
 	vec4 proj; // (near, far, aspect, fov)
+	float time;
 
-} pushConstants;
+} pc;
 
-layout(binding = 0) uniform sampler2D texSampler;
+layout(binding = 0) uniform sampler2D textures[ MAX_TEXTURES ];
 
 // Material properties
 vec3 bg_color = vec3(0.00,0.00,0.05);
@@ -65,7 +66,8 @@ void main() {
             }
             // normalize coordinates for texture sampling. 
             // Top-left of texture is (0,0) in Vulkan, so we can stick to spherical coordinates
-             color = texture(texSampler, vec2(1.0+0.5*theta/PI, phi/PI ));
+             color = texture(textures[ int(mod(pc.time,MAX_TEXTURES)) ], 
+		vec2(1.0+0.5*theta/PI, phi/PI ));
         }
     }
 }
