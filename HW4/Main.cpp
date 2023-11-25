@@ -123,12 +123,24 @@ static std::vector<char const*> FilterSupportedLayers(std::vector<char const*> c
 VklCamera* camera;
 float aspect;
 
+// the current time the simulation should display
+float time_since_epoch;
+constexpr float TIME_DELTA = 1.f;
+
+// use this to find textures and shaders
+std::string basePath( TO_LITERAL(ASSET_DIR) );
+
+
 /* ------------------------------------------------ */
 // Main
 /* ------------------------------------------------ */
 int main(int argc, char** argv)
 {
 	VKL_LOG(":::::: WELCOME TO VULKAN LAUNCHPAD ::::::");
+
+	// check if we were handed the asset directory on the command line
+	if( argc > 1 )
+		basePath = std::string( argv[1] );
 
 	// Install a callback function, which gets invoked whenever a GLFW error occurred:
 	glfwSetErrorCallback(errorCallbackFromGlfw);
@@ -144,7 +156,7 @@ int main(int argc, char** argv)
 	static constexpr int window_width  = 800;
 	static constexpr int window_height = 800;
 	static constexpr bool fullscreen = false;
-	static constexpr char const * window_title = "CPSC 453: HW4";
+	static constexpr char const * window_title = "CPSC 453: HW4 Starter";
 
 	aspect = 1.0f;
 
@@ -384,16 +396,16 @@ int main(int argc, char** argv)
 	// enable shader hot reloading
 	vklEnablePipelineHotReloading(window, GLFW_KEY_F5);
 	while (!glfwWindowShouldClose(window)) {
+
 		vklWaitForNextSwapchainImage();
-    	vklStartRecordingCommands();
+    		vklStartRecordingCommands();
 		
-    	// Your commands here
-		
-		
+    		// Your commands here
 		objectDraw();
 
-    	vklEndRecordingCommands();
-    	vklPresentCurrentSwapchainImage();
+    		vklEndRecordingCommands();
+    		vklPresentCurrentSwapchainImage();
+
 		glfwPollEvents(); // Handle user input
 		vklUpdateCamera(camera);
 	}
@@ -430,16 +442,33 @@ void handleGlfwKeyCallback(GLFWwindow* glfw_window, int key, int scancode, int a
 		g_isGlfwKeyDown[key] = false;
 	}
 
-	
 	// We mark the window that it should close if ESC is pressed:
 	if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) { 
 		glfwSetWindowShouldClose(glfw_window, true); 
+	}
+
+	// exit early if we weren't asked to perform any action
+	if( (action != GLFW_PRESS) && (action != GLFW_REPEAT) )
+		return;
+
+	// we've been asked to do something
+	switch( key ) {
+
+		// handle moving forward and backward in time
+		case GLFW_KEY_LEFT:
+			time_since_epoch -= TIME_DELTA;
+			break;
+		case GLFW_KEY_RIGHT:
+			time_since_epoch += TIME_DELTA;
+			break;
+
+		// IDEAS: add controls to reset time to a fixed value, or change time faster/slower
 	}
 }
 
 void handleResizeCallback(GLFWwindow* window, int width, int height)
 {
-	vklNotifyResized(GenerateSwapChainConfig());
+	vklNotifyResized( GenerateSwapChainConfig() );
 	aspect = static_cast<float>(width) / static_cast<float>(height);
 }
 
@@ -517,23 +546,6 @@ VklSwapchainConfig GenerateSwapChainConfig()
 		clearValue.color = { 0.1f, 0.1f, 0.1f, 1.0f };
 		framebufferData.colorAttachmentImageDetails.clearValue = clearValue;
 
-		// Let's also add a depth attachment for HW2
-		/*
-		VkImage depthImage = vklCreateDeviceLocalImageWithBackingMemory(
-			vk_physical_device,
-			vk_device,
-			swapchain_config.imageExtent.width,
-		 	swapchain_config.imageExtent.height, 
-			VK_FORMAT_D32_SFLOAT,
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );		
-		framebufferData.depthAttachmentImageDetails.imageHandle = depthImage;
-		framebufferData.depthAttachmentImageDetails.imageFormat = VK_FORMAT_D32_SFLOAT;
-		framebufferData.depthAttachmentImageDetails.imageUsage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		VkClearValue depthClear;
-		depthClear.depthStencil.depth = 1.f;
-		framebufferData.depthAttachmentImageDetails.clearValue  = depthClear;
-		*/
-		
 		// Add it to the vector:
 		swapchain_config.swapchainImages.push_back(framebufferData);
 	}
