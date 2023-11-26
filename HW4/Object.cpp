@@ -207,7 +207,7 @@ void objectCreatePipeline() {
 	config.descriptorLayout.emplace_back( VkDescriptorSetLayoutBinding{
 		.binding = 0,
 		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		.descriptorCount = textures.size(),
+		.descriptorCount = static_cast<uint32_t>(textures.size()),
 		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
 		.pImmutableSamplers = nullptr,
 	});
