@@ -23,6 +23,8 @@ layout(binding = 0) uniform sampler2D textures[ MAX_TEXTURES ];
 // Material properties
 vec3 bg_color = vec3(0.00,0.00,0.05);
 
+float closest = -1.0;
+
 void ray_trace(int texture_index, float radius, vec3 center){
 
     vec3 dir = normalize(d);
@@ -30,7 +32,7 @@ void ray_trace(int texture_index, float radius, vec3 center){
     float prod = 2.0 * dot(pnot,dir);
 
     float normp = length(pnot);
-    float discriminant = prod*prod -4.0*(-radius + normp*normp);
+    float discriminant = prod*prod -4.0*(-radius*radius + normp*normp);
 
     if( discriminant >= 0.0) {
         // determine intersection point
@@ -45,7 +47,10 @@ void ray_trace(int texture_index, float radius, vec3 center){
             tmin = t2;
             tmax = t1;
         }
-        if(tmax > 0.0) {
+        if(tmax > 0.0 && (closest < 0.0 || tmin < closest)) {
+
+            closest = tmin;
+
             t = (tmin > 0) ? tmin : tmax;
             vec3 ipoint = pnot + t*(dir);
             vec3 normal = normalize(ipoint);
@@ -78,15 +83,15 @@ void main() {
     //z-buffer???
 
     //starry background
-    ray_trace(0, 500, vec3(0,0,0));
+    ray_trace(0, 100, vec3(0,0,0));
 
     //sun
     ray_trace(1, 1.5, vec3(0,0,0));
 
     //earth
-    ray_trace(2, 0.75, vec3(4,0,0));
+    ray_trace(2, 0.75, vec3(7,0,0));
 
     //moon
-    ray_trace(3, 0.25, vec3(6,0,0));
+    ray_trace(3, 0.25, vec3(9,0,0));
 
 }
