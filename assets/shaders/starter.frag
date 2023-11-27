@@ -23,16 +23,15 @@ layout(binding = 0) uniform sampler2D textures[ MAX_TEXTURES ];
 // Material properties
 vec3 bg_color = vec3(0.00,0.00,0.05);
 
-void main() {
-    
-    // intersect against sphere of radius 1 centered at the origin
+void ray_trace(int texture_index, float radius, vec3 center){
 
     vec3 dir = normalize(d);
+    vec3 pnot = p - center;
+    float prod = 2.0 * dot(pnot,dir);
 
-    float prod = 2.0 * dot(p,dir);
-    float normp = length(p);
-    float discriminant = prod*prod -4.0*(-1.0 + normp*normp);
-    color = vec4(bg_color, 1.0);
+    float normp = length(pnot);
+    float discriminant = prod*prod -4.0*(-radius + normp*normp);
+
     if( discriminant >= 0.0) {
         // determine intersection point
         float t1 = 0.5 * (-prod - sqrt(discriminant));
@@ -48,11 +47,11 @@ void main() {
         }
         if(tmax > 0.0) {
             t = (tmin > 0) ? tmin : tmax;
-            vec3 ipoint = p + t*(dir);
+            vec3 ipoint = pnot + t*(dir);
             vec3 normal = normalize(ipoint);
-            
+
             // determine texture coordinates in spherical coordinates
-            
+
             // First rotate about x through 90 degrees so that y is up.
             normal.z = -normal.z;
             normal = normal.xzy;
@@ -60,14 +59,34 @@ void main() {
             float phi = acos(normal.z);
             float theta;
             if(abs(normal.x) < 0.001) {
-                theta = sign(normal.y)*PI*0.5; 
+                theta = sign(normal.y)*PI*0.5;
             } else {
-                theta = atan(normal.y, normal.x); 
+                theta = atan(normal.y, normal.x);
             }
-            // normalize coordinates for texture sampling. 
+            // normalize coordinates for texture sampling.
             // Top-left of texture is (0,0) in Vulkan, so we can stick to spherical coordinates
-             color = texture(textures[ int(mod(pc.time,MAX_TEXTURES)) ], 
-		vec2(1.0+0.5*theta/PI, phi/PI ));
+            color = texture(textures[texture_index], vec2(1.0+0.5*theta/PI, phi/PI ));
         }
     }
+}
+
+void main() {
+
+    color = vec4(bg_color, 1.0);
+
+    //with this current implementation, the last object to get raytraced is in front, need to fix this
+    //z-buffer???
+
+    //starry background
+    ray_trace(0, 500, vec3(0,0,0));
+
+    //sun
+    ray_trace(1, 1.5, vec3(0,0,0));
+
+    //earth
+    ray_trace(2, 0.75, vec3(4,0,0));
+
+    //moon
+    ray_trace(3, 0.25, vec3(6,0,0));
+
 }
