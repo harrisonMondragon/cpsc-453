@@ -25,9 +25,10 @@ vec3 bg_color = vec3(0.00,0.00,0.05);
 
 float closest = -1.0;
 
-void ray_trace(int texture_index, float radius, vec3 center){
+void ray_trace(int texture_index, float radius, vec3 center, float rot){
 
     vec3 dir = normalize(d);
+
     vec3 pnot = p - center;
     float prod = 2.0 * dot(pnot,dir);
 
@@ -53,6 +54,15 @@ void ray_trace(int texture_index, float radius, vec3 center){
 
             t = (tmin > 0) ? tmin : tmax;
             vec3 ipoint = pnot + t*(dir);
+
+            mat3 intrinsic = mat3(
+                cos(rot),-sin(rot),0,
+                sin(rot),cos(rot),0,
+                0,0,1
+            );
+
+            ipoint = intrinsic * ipoint;
+
             vec3 normal = normalize(ipoint);
 
             // determine texture coordinates in spherical coordinates
@@ -79,19 +89,19 @@ void main() {
 
     color = vec4(bg_color, 1.0);
 
-    //with this current implementation, the last object to get raytraced is in front, need to fix this
-    //z-buffer???
-
     //starry background
-    ray_trace(0, 100, vec3(0,0,0));
+    ray_trace(0, 100, vec3(0,0,0), 0);
 
     //sun
-    ray_trace(1, 1.5, vec3(0,0,0));
+    ray_trace(1, 1.5, vec3(0,0,0), pc.time/100);
 
     //earth
-    ray_trace(2, 0.75, vec3(7,0,0));
+    //ray_trace(2, 0.75, vec3(7,0,0), 0);
+    float earthx = 7*cos(pc.time/50);
+    float earthy = 7*sin(pc.time/50);
+    ray_trace(2, 0.75, vec3(earthx,earthy,0), pc.time/5);
 
     //moon
-    ray_trace(3, 0.25, vec3(9,0,0));
+    ray_trace(3, 0.25, vec3(2*cos(pc.time/20)+earthx,2*sin(pc.time/20)+earthy,0), 0);
 
 }
