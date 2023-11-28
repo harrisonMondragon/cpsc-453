@@ -23,9 +23,17 @@ layout(binding = 0) uniform sampler2D textures[ MAX_TEXTURES ];
 // Material properties
 vec3 bg_color = vec3(0.00,0.00,0.05);
 
+// To tell which planet to render on top
 float closest = -1.0;
 
-void ray_trace(int texture_index, float radius, vec3 center, float rot){
+// Lighting constants
+float ambient_strength = 0.1;
+vec3 specular_strength = vec3(0.5, 0.5, 0.5);	// allow some diffuse through
+float specular_power = 76.8;
+vec3 lightCol = vec3(1.0, 1.0, 1.0);	// overall light colour
+
+
+void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lighting){
 
     vec3 dir = normalize(d);
 
@@ -50,7 +58,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot){
         }
         if(tmax > 0.0 && (closest < 0.0 || tmin < closest)) {
 
-            closest = tmin;
+            closest = tmin > 0.0 ? tmin : tmax;
 
             t = (tmin > 0) ? tmin : tmax;
             vec3 ipoint = pnot + t*(dir);
@@ -61,9 +69,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot){
                 0,0,1
             );
 
-            ipoint = intrinsic * ipoint;
-
-            vec3 normal = normalize(ipoint);
+            vec3 normal = normalize(intrinsic * ipoint);
 
             // determine texture coordinates in spherical coordinates
 
@@ -80,7 +86,26 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot){
             }
             // normalize coordinates for texture sampling.
             // Top-left of texture is (0,0) in Vulkan, so we can stick to spherical coordinates
-            color = texture(textures[texture_index], vec2(1.0+0.5*theta/PI, phi/PI ));
+            vec4 basecol = texture(textures[texture_index], vec2(1.0+0.5*theta/PI, phi/PI ));
+
+            // Lighting
+            if(lighting){
+                vec3 N = normalize(ipoint - center);
+                vec3 L = normalize(ipoint);
+                vec3 V = normalize(p - ipoint);
+                vec3 R = reflect(-L, N);
+                
+                vec3 ambient = ambient_strength * basecol.rgb;
+                vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
+
+                vec3 specular = vec3(0,0,0);
+                if(dot(N,L) > 0){
+                    specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
+                }
+                color = vec4((ambient + diffuse + specular)*lightCol, basecol.a);
+            } else {
+                color = basecol;
+            }
         }
     }
 }
@@ -96,19 +121,19 @@ void main() {
     color = vec4(bg_color, 1.0);
 
     //starry background
-    ray_trace(0, 100, vec3(0,0,0), 0);
+    ray_trace(0, 100, vec3(0,0,0), 0, false);
 
     //sun
-    ray_trace(1, 1.5, vec3(0,0,0), pc.time/sun_axial_period);
+    ray_trace(1, 1.5, vec3(0,0,0), pc.time/sun_axial_period, false);
 
     //earth
     float earthx = 7*cos(pc.time/earth_orbital_period);
     float earthy = 7*sin(pc.time/earth_orbital_period);
-    ray_trace(2, 0.75, vec3(earthx,earthy,0), pc.time/earth_axial_period);
+    ray_trace(2, 0.75, vec3(earthx,earthy,0), pc.time/earth_axial_period, true);
 
     //moon
     float moonx = 2*cos(pc.time/moon_orbital_period)+earthx;
     float moony = 2*sin(pc.time/moon_orbital_period)+earthy;
-    ray_trace(3, 0.25, vec3(moonx,moony,0), pc.time/moon_axial_period);
+    ray_trace(3, 0.25, vec3(moonx,moony,0), pc.time/moon_axial_period, true);
 
 }
