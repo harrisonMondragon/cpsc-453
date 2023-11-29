@@ -63,19 +63,21 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
             t = (tmin > 0) ? tmin : tmax;
             vec3 ipoint = pminusc + t*(dir);
 
-            mat3 intrinsic = mat3(
-                cos(rot),-sin(rot),0,
-                sin(rot),cos(rot),0,
-                0,0,1
-            );
+            // mat3 intrinsic = mat3(
+            //     cos(rot),-sin(rot),0,
+            //     sin(rot),cos(rot),0,
+            //     0,0,1
+            // );
 
-            vec3 normal = normalize(intrinsic * ipoint);
+            // vec3 normal = normalize(intrinsic * ipoint);
+
+            vec3 normal = normalize(ipoint);
 
             // determine texture coordinates in spherical coordinates
-
+            
             // First rotate about x through 90 degrees so that y is up.
-            // normal.z = -normal.z;
-            // normal = normal.xzy;
+            normal.z = -normal.z;
+            normal = normal.xzy;
 
             float phi = acos(normal.z);
             float theta;
@@ -86,7 +88,9 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
             }
             // normalize coordinates for texture sampling.
             // Top-left of texture is (0,0) in Vulkan, so we can stick to spherical coordinates
-            vec4 basecol = texture(textures[texture_index], vec2(1.0+0.5*theta/PI, phi/PI ));
+            // vec4 basecol = texture(textures[texture_index], vec2(1.0+0.5*theta/PI, phi/PI ));
+
+            vec4 basecol = texture(textures[texture_index], vec2(rot+0.5*theta/PI, phi/PI ));
 
             // Lighting
             if(lighting){
@@ -113,11 +117,15 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
 
 void main() {
 
-    float moon_axial_period = 27.00;
+    float click_per_day = 3.0;
+
+    float moon_axial_period = 27.00 * click_per_day;
     float moon_orbital_period = moon_axial_period;
     float earth_axial_period = moon_axial_period/27.00;
     float earth_orbital_period = moon_orbital_period*12;
     float sun_axial_period = moon_axial_period;
+
+    float ahh = pc.time/5.0;
 
     color = vec4(bg_color, 1.0);
 
@@ -125,16 +133,22 @@ void main() {
     ray_trace(0, 100, vec3(0,0,0), 0, false);
 
     //sun
-    ray_trace(1, 1.5, vec3(0,0,0), pc.time/sun_axial_period, false);
+    // ray_trace(1, 1.5, vec3(0,0,0), pc.time/sun_axial_period, false);
+    // ray_trace(1, 1.5, vec3(0,0,0), pc.time/sun_axial_period, false);
+    ray_trace(1, 1.5, vec3(0,0,0), ahh/sun_axial_period, false);
 
     //earth
     float earthx = 10*cos(pc.time/earth_orbital_period);
     float earthy = 10*sin(pc.time/earth_orbital_period);
-    ray_trace(2, 0.75, vec3(earthx,earthy,0), pc.time/earth_axial_period, true);
+    // ray_trace(2, 0.75, vec3(earthx,earthy,0), pc.time/earth_axial_period, true);
+    // ray_trace(2, 0.75, vec3(earthx,0,earthy), pc.time/click_per_day, true);
+    ray_trace(2, 0.75, vec3(earthx,0,earthy), ahh/click_per_day, true);
 
     //moon
     float moonx = 2*cos(pc.time/moon_orbital_period)+earthx;
     float moony = 2*sin(pc.time/moon_orbital_period)+earthy;
-    ray_trace(3, 0.25, vec3(moonx,moony,0), pc.time/moon_axial_period, true);
+    // ray_trace(3, 0.25, vec3(moonx,moony,0), pc.time/moon_axial_period, true);
+    // ray_trace(3, 0.25, vec3(moonx,0,moony), pc.time/moon_axial_period, true);
+    ray_trace(3, 0.25, vec3(moonx,0,moony), ahh/moon_axial_period, true);
 
 }
