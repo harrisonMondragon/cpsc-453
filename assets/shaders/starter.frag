@@ -29,7 +29,7 @@ float closest = -1.0;
 // Lighting constants
 float ambient_strength = 0.1;
 vec3 specular_strength = vec3(0.5, 0.5, 0.5);	// allow some diffuse through
-float specular_power = 76.8;
+float specular_power = 128;
 vec3 lightCol = vec3(1.0, 1.0, 1.0);	// overall light colour
 
 
@@ -37,10 +37,10 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
 
     vec3 dir = normalize(d);
 
-    vec3 pnot = p - center;
-    float prod = 2.0 * dot(pnot,dir);
+    vec3 pminusc = p - center;
+    float prod = 2.0 * dot(pminusc,dir);
 
-    float normp = length(pnot);
+    float normp = length(pminusc);
     float discriminant = prod*prod -4.0*(-radius*radius + normp*normp);
 
     if( discriminant >= 0.0) {
@@ -61,7 +61,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
             closest = tmin > 0.0 ? tmin : tmax;
 
             t = (tmin > 0) ? tmin : tmax;
-            vec3 ipoint = pnot + t*(dir);
+            vec3 ipoint = pminusc + t*(dir);
 
             mat3 intrinsic = mat3(
                 cos(rot),-sin(rot),0,
@@ -74,8 +74,8 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
             // determine texture coordinates in spherical coordinates
 
             // First rotate about x through 90 degrees so that y is up.
-            normal.z = -normal.z;
-            normal = normal.xzy;
+            // normal.z = -normal.z;
+            // normal = normal.xzy;
 
             float phi = acos(normal.z);
             float theta;
@@ -97,11 +97,12 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
                 
                 vec3 ambient = ambient_strength * basecol.rgb;
                 vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
-
+                
                 vec3 specular = vec3(0,0,0);
                 if(dot(N,L) > 0){
                     specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
                 }
+                
                 color = vec4((ambient + diffuse + specular)*lightCol, basecol.a);
             } else {
                 color = basecol;
@@ -127,8 +128,8 @@ void main() {
     ray_trace(1, 1.5, vec3(0,0,0), pc.time/sun_axial_period, false);
 
     //earth
-    float earthx = 7*cos(pc.time/earth_orbital_period);
-    float earthy = 7*sin(pc.time/earth_orbital_period);
+    float earthx = 10*cos(pc.time/earth_orbital_period);
+    float earthy = 10*sin(pc.time/earth_orbital_period);
     ray_trace(2, 0.75, vec3(earthx,earthy,0), pc.time/earth_axial_period, true);
 
     //moon
