@@ -29,11 +29,11 @@ float closest = -1.0;
 // Lighting constants
 float ambient_strength = 0.1;
 vec3 specular_strength = vec3(0.5, 0.5, 0.5);	// allow some diffuse through
-float specular_power = 128;
+float specular_power = 64.0;
 vec3 lightCol = vec3(1.0, 1.0, 1.0);	// overall light colour
 
 
-void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lighting){
+void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lighting, bool moon){
 
     vec3 dir = normalize(d);
 
@@ -61,7 +61,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
             closest = tmin > 0.0 ? tmin : tmax;
 
             t = (tmin > 0) ? tmin : tmax;
-            vec3 ipoint = pminusc + t*(dir);
+            vec3 ipoint = p + t*(dir);
 
             // mat3 intrinsic = mat3(
             //     cos(rot),-sin(rot),0,
@@ -71,7 +71,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
 
             // vec3 normal = normalize(intrinsic * ipoint);
 
-            vec3 normal = normalize(ipoint);
+            vec3 normal = normalize(ipoint - center);
 
             // determine texture coordinates in spherical coordinates
             
@@ -90,14 +90,18 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
             // Top-left of texture is (0,0) in Vulkan, so we can stick to spherical coordinates
             // vec4 basecol = texture(textures[texture_index], vec2(1.0+0.5*theta/PI, phi/PI ));
 
+            if(moon){
+                theta += 4.6;
+            }
+
             vec4 basecol = texture(textures[texture_index], vec2(rot+0.5*theta/PI, phi/PI ));
 
             // Lighting
             if(lighting){
                 vec3 N = normalize(ipoint - center);
-                vec3 L = normalize(ipoint);
-                vec3 V = normalize(p - ipoint);
-                vec3 R = reflect(-L, N);
+                vec3 L = normalize(-ipoint);
+                vec3 V = normalize(d);
+                vec3 R = reflect(L, N);
                 
                 vec3 ambient = ambient_strength * basecol.rgb;
                 vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
@@ -130,25 +134,25 @@ void main() {
     color = vec4(bg_color, 1.0);
 
     //starry background
-    ray_trace(0, 100, vec3(0,0,0), 0, false);
+    ray_trace(0, 100, vec3(0,0,0), 0, false, false);
 
     //sun
     // ray_trace(1, 1.5, vec3(0,0,0), pc.time/sun_axial_period, false);
     // ray_trace(1, 1.5, vec3(0,0,0), pc.time/sun_axial_period, false);
-    ray_trace(1, 1.5, vec3(0,0,0), ahh/sun_axial_period, false);
+    ray_trace(1, 1.5, vec3(0,0,0), ahh/sun_axial_period, false, false);
 
     //earth
     float earthx = 10*cos(pc.time/earth_orbital_period);
     float earthy = 10*sin(pc.time/earth_orbital_period);
     // ray_trace(2, 0.75, vec3(earthx,earthy,0), pc.time/earth_axial_period, true);
     // ray_trace(2, 0.75, vec3(earthx,0,earthy), pc.time/click_per_day, true);
-    ray_trace(2, 0.75, vec3(earthx,0,earthy), ahh/click_per_day, true);
+    ray_trace(2, 0.75, vec3(earthx,0,earthy), ahh/click_per_day, true, false);
 
     //moon
     float moonx = 2*cos(pc.time/moon_orbital_period)+earthx;
     float moony = 2*sin(pc.time/moon_orbital_period)+earthy;
     // ray_trace(3, 0.25, vec3(moonx,moony,0), pc.time/moon_axial_period, true);
     // ray_trace(3, 0.25, vec3(moonx,0,moony), pc.time/moon_axial_period, true);
-    ray_trace(3, 0.25, vec3(moonx,0,moony), ahh/moon_axial_period, true);
+    ray_trace(3, 0.25, vec3(moonx,0,moony), ahh/moon_axial_period, true, true);
 
 }
