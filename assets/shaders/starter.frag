@@ -43,7 +43,7 @@ bool shadow(int texture_index, vec3 ray){
 
     vec3 center;
     float radius;
-    
+
     // If earth, calculate if moon intersects
     if(texture_index == 2){
         center = moon_center;
@@ -148,7 +148,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
                 vec3 ambient = ambient_strength * basecol.rgb;
                 vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
                 vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
-                
+
                 if(shadow(texture_index, ipoint)){
                     diffuse = vec3(0,0,0);
                     specular = vec3(0,0,0);
@@ -165,7 +165,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
 void main() {
 
     // Transformation constants
-    float moon_axial_period = 27.00;
+    float moon_axial_period = 50.00;
     float moon_orbital_period = moon_axial_period;
     float earth_axial_period = moon_axial_period/27.00;
     float earth_orbital_period = moon_orbital_period*12;
@@ -182,6 +182,9 @@ void main() {
     float moonx = 0.4*cos(pc.time/moon_orbital_period)+earthx;
     float moonz = 0.4*sin(pc.time/moon_orbital_period)+earthz;
     moon_center = vec3(moonx,0,moonz);
+
+    // mat3 moon_orbital_tilt = mat3(cos(radians(30.14)),-sin(radians(30.14)),0, sin(radians(30.14)),cos(radians(30.14)),0, 0,0,1);
+    // moon_center = moon_orbital_tilt * moon_center;
 
     // Background
     ray_trace(0, 100, vec3(0,0,0), 0, false);
