@@ -38,7 +38,7 @@ float earth_rad = 0.2;
 vec3 moon_center;
 float moon_rad = 0.05;
 
-
+// Shadow function to determine where shadows should be applied
 bool shadow(int texture_index, vec3 ray){
 
     vec3 center;
@@ -84,6 +84,7 @@ bool shadow(int texture_index, vec3 ray){
     return false;
 }
 
+// Ray trace function to output the correct color for the correct ray
 void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lighting){
 
     vec3 dir = normalize(d);
@@ -107,6 +108,8 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
             tmin = t2;
             tmax = t1;
         }
+
+        // Only output the color for the body closest to the viewer
         if(tmax > 0.0 && (closest < 0.0 || tmin < closest)) {
 
             closest = tmin > 0.0 ? tmin : tmax;
@@ -129,6 +132,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
                 theta = atan(normal.y, normal.x);
             }
 
+            // To account for spherical coordinates
             float axial_value = rot/(2.0*PI);
 
             // normalize coordinates for texture sampling.
@@ -149,6 +153,7 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
                 vec3 diffuse = max(dot(N, L), 0.0) * basecol.rgb;
                 vec3 specular = pow(max(dot(R, V), 0.0), specular_power) * specular_strength;
 
+                // Apply shadow rays
                 if(shadow(texture_index, ipoint)){
                     diffuse = vec3(0,0,0);
                     specular = vec3(0,0,0);
@@ -164,8 +169,8 @@ void ray_trace(int texture_index, float radius, vec3 center, float rot, bool lig
 
 void main() {
 
-    // Transformation constants
-    float moon_axial_period = 50.00;
+    // Transformation constants. Alter moon axial period, and the rest will change accordingly
+    float moon_axial_period = 27.00;
     float moon_orbital_period = moon_axial_period;
     float earth_axial_period = moon_axial_period/27.00;
     float earth_orbital_period = moon_orbital_period*12;
@@ -179,12 +184,18 @@ void main() {
     float earthz = 1.6*sin(pc.time/earth_orbital_period);
     earth_center = vec3(earthx,0,earthz);
 
-    float moonx = 0.4*cos(pc.time/moon_orbital_period)+earthx;
-    float moonz = 0.4*sin(pc.time/moon_orbital_period)+earthz;
+    // Calculate moon coords before adding earth coords
+    float moonx = 0.4*cos(pc.time/moon_orbital_period);
+    float moonz = 0.4*sin(pc.time/moon_orbital_period);
     moon_center = vec3(moonx,0,moonz);
 
-    // mat3 moon_orbital_tilt = mat3(cos(radians(30.14)),-sin(radians(30.14)),0, sin(radians(30.14)),cos(radians(30.14)),0, 0,0,1);
-    // moon_center = moon_orbital_tilt * moon_center;
+    // Apply orbital tilt
+    mat3 moon_orbital_tilt = mat3(cos(radians(5.14)),-sin(radians(5.14)),0, sin(radians(5.14)),cos(radians(5.14)),0, 0,0,1);
+    moon_center = moon_orbital_tilt * moon_center;
+
+    // Add earth coords to moon coords
+    moon_center.x += earthx;
+    moon_center.z += earthz;
 
     // Background
     ray_trace(0, 100, vec3(0,0,0), 0, false);
